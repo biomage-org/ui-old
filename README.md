@@ -2,7 +2,7 @@
 ui
 ==
 
-The user interface of Cellenics - cloud based Single Cell RNA seq Analysis web platform.
+Hello, world! The user interface of Cellenics - cloud based Single Cell RNA seq Analysis web platform.
 
 Development
 -----------
