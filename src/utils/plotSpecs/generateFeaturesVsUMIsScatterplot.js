@@ -2,7 +2,6 @@ import { round } from 'lodash';
 import { stdev } from '../mathFormulas';
 
 const generateSpec = (config, plotData, expConfig) => {
-  console.log('config', config, 'plotData', plotData, 'expConfig', expConfig);
   const { pointsData, linesData } = plotData;
   const { predictionInterval } = expConfig;
 
@@ -34,6 +33,14 @@ const generateSpec = (config, plotData, expConfig) => {
   const upperCutoff = Math.max(
     ...selectedLinesData.map((p) => p.upper_cutoff),
   ) + sd;
+
+  const xScaleDomain = config.axesRanges.xAxisAuto
+    ? { data: 'pointsData', field: 'log_molecules' }
+    : [config.axesRanges.xMin, config.axesRanges.xMax];
+
+  const yScaleDomain = config.axesRanges.yAxisAuto
+    ? [lowerCutoff, upperCutoff]
+    : [config.axesRanges.yMin, config.axesRanges.yMax];
 
   return {
     $schema: 'https://vega.github.io/schema/vega/v5.json',
@@ -83,7 +90,7 @@ const generateSpec = (config, plotData, expConfig) => {
         type: 'linear',
         round: true,
         zero: false,
-        domain: { data: 'pointsData', field: 'log_molecules' },
+        domain: xScaleDomain,
         range: 'width',
       },
       {
@@ -91,10 +98,7 @@ const generateSpec = (config, plotData, expConfig) => {
         type: 'linear',
         round: true,
         zero: false,
-        domain: [
-          lowerCutoff,
-          upperCutoff,
-        ],
+        domain: yScaleDomain,
         range: 'height',
       },
     ],
@@ -138,6 +142,7 @@ const generateSpec = (config, plotData, expConfig) => {
       {
         name: 'marks',
         type: 'symbol',
+        clip: true,
         from: { data: 'pointsData' },
         encode: {
           update: {
@@ -152,6 +157,7 @@ const generateSpec = (config, plotData, expConfig) => {
       },
       {
         type: 'line',
+        clip: true,
         from: { data: 'linesData' },
         encode: {
           update: {
@@ -165,6 +171,7 @@ const generateSpec = (config, plotData, expConfig) => {
       },
       {
         type: 'line',
+        clip: true,
         from: { data: 'linesData' },
         encode: {
           update: {
