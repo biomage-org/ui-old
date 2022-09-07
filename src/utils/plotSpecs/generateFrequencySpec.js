@@ -57,7 +57,16 @@ const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
 
   return {
     $schema: 'https://vega.github.io/schema/vega/v5.json',
-    width: config.dimensions.width,
+    signals: [
+      {
+        name: 'widthSignal',
+        value: 500,
+        bind: {
+          input: 'range', min: 400, max: 1200,
+        },
+      },
+    ],
+    width: { signal: 'widthSignal' },
     height: config.dimensions.height,
     autosize: { type: 'fit', resize: true },
     background: config.colour.toggleInvert,

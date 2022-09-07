@@ -90,7 +90,16 @@ const generateSpec = (config, groupName, data, displayLabels = true) => {
 
   return {
     $schema: 'https://vega.github.io/schema/vega/v5.json',
-    width: config.dimensions.width,
+    signals: [
+      {
+        name: 'widthSignal',
+        value: 500,
+        bind: {
+          input: 'range', min: 400, max: 1200, step: 1, debounce: 100,
+        },
+      },
+    ],
+    width: { signal: 'widthSignal' },
     height: config.dimensions.height,
     autosize: { type: 'fit', resize: true },
 
