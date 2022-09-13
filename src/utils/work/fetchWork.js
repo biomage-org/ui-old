@@ -10,11 +10,6 @@ import { dispatchWorkRequest, seekFromS3 } from 'utils/work/seekWorkResponse';
 
 const createObjectHash = (object) => MD5(object);
 
-// Disable unique keys to reallow reuse of work results in development
-const DISABLE_UNIQUE_KEYS = [
-  'GetEmbedding',
-];
-
 const generateETag = (
   experimentId,
   body,
@@ -29,7 +24,6 @@ const generateETag = (
   if (
     environment !== Environment.PRODUCTION
     && localStorage.getItem('disableCache') === 'true'
-    && !DISABLE_UNIQUE_KEYS.includes(body.name)
   ) {
     cacheUniquenessKey = Math.random();
   }
@@ -164,10 +158,6 @@ const fetchWork = async (
   const { environment } = getState().networkResources;
   if (!isBrowser) {
     throw new Error('Disabling network interaction on server');
-  }
-
-  if (environment === Environment.DEVELOPMENT && !localStorage.getItem('disableCache')) {
-    localStorage.setItem('disableCache', 'true');
   }
 
   const { pipeline: { startDate: qcPipelineStartDate } } = backendStatus;
