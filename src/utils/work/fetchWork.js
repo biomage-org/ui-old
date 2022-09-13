@@ -10,6 +10,13 @@ import { dispatchWorkRequest, seekFromS3 } from 'utils/work/seekWorkResponse';
 
 const createObjectHash = (object) => MD5(object);
 
+// Disable unique keys to reallow reuse of work results in development
+const DISABLE_UNIQUE_KEYS = [
+  // Enable this if you are working on the trajectory analysis because
+  // trajectory analyisrequires a cached embedding result
+  // 'GetEmbedding',
+];
+
 const generateETag = (
   experimentId,
   body,
@@ -24,6 +31,7 @@ const generateETag = (
   if (
     environment !== Environment.PRODUCTION
     && localStorage.getItem('disableCache') === 'true'
+    && !DISABLE_UNIQUE_KEYS.includes(body.name)
   ) {
     cacheUniquenessKey = Math.random();
   }
