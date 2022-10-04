@@ -1,4 +1,5 @@
 // eslint-disable-file import/no-extraneous-dependencies
+import _ from 'lodash';
 import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import {
@@ -28,6 +29,7 @@ import {
   colorInterpolator,
 } from 'utils/plotUtils';
 import getContainingCellSetsProperties from 'utils/cellSets/getContainingCellSetsProperties';
+import useConditionalEffect from 'utils/customHooks/useConditionalEffect';
 
 const Scatterplot = dynamic(
   () => import('vitessce/dist/umd/production/scatterplot.min').then((mod) => mod.Scatterplot),
@@ -48,14 +50,16 @@ const Embedding = (props) => {
   const [cellRadius, setCellRadius] = useState(cellRadiusFromZoom(INITIAL_ZOOM));
   const rootClusterNodes = useSelector(getCellSetsHierarchyByType('cellSets')).map(({ key }) => key);
 
-  const selectedCellIds = new Set();
+  const selectedCellIds = useRef(new Set());
 
   const embeddingSettings = useSelector(
     (state) => state.experimentSettings?.originalProcessing?.configureEmbedding?.embeddingSettings,
   );
   const embeddingType = embeddingSettings?.method;
 
-  const { data, loading, error } = useSelector((state) => state.embeddings[embeddingType]) || {};
+  const {
+    data, loading, error,
+  } = useSelector((state) => state.embeddings[embeddingType], _.isEqual) || {};
 
   const focusData = useSelector((state) => state.cellInfo.focus);
   const focusedExpression = useSelector((state) => state.genes.expression.data[focusData.key]);
@@ -156,9 +160,30 @@ const Embedding = (props) => {
         componentType: embeddingType,
         expression: expressionToDispatch,
         geneName,
+<<<<<<< Updated upstream
       };
+=======
+      });
+
+      setCellInfoVisible(true);
+    } else {
+      setCellInfoVisible(false);
+>>>>>>> Stashed changes
     }
   }, [selectedCell]);
+
+  const embedingData = useRef({});
+
+  useConditionalEffect(() => {
+    if (!data
+      || loading
+      || (focusData.store === 'genes' && !loadedGenes.includes(focusData.key) && expressionLoading.includes(focusData.key))
+      || error
+    ) return;
+
+    console.log('HOLAHOLAHOLAHOLA');
+    embedingData.current = convertCellsData(data, cellSetHidden, cellSetProperties);
+  }, [data, cellSetHidden, cellSetProperties]);
 
   const updateCellCoordinates = (newView) => {
     if (selectedCell && newView.project) {
@@ -172,7 +197,16 @@ const Embedding = (props) => {
     }
   };
 
-  const updateCellsHover = (cell) => dispatch(updateCellInfo({ cellId: cell }));
+  const updateCellsHover = (cellId) => {
+    console.log('cellIdDebug');
+    console.log(cellId);
+    console.log(cellId === '');
+    // cellId sent from the Scatterplot is an empty string when none is selected,
+    // replace it with null in that case
+    const cellIdToDispatch = cellId !== '' ? cellId : null;
+
+    dispatch(updateCellInfo({ cellId: cellIdToDispatch }));
+  };
 
   const onCreateCluster = (clusterName, clusterColor) => {
     setCreateClusterPopover(false);
@@ -265,9 +299,9 @@ const Embedding = (props) => {
       // make sure that the crosshairs don't break zooming in and out of the embedding
       onWheel={() => { setCellInfoVisible(false); }}
       onMouseMove={() => {
-        if (!cellInfoVisible) {
-          setCellInfoVisible(true);
-        }
+        // if (!cellInfoVisible) {
+        //   setCellInfoVisible(true);
+        // }
       }}
     >
       {renderExpressionView()}
@@ -281,13 +315,14 @@ const Embedding = (props) => {
             uuid={embeddingType}
             viewState={view}
             updateViewInfo={updateCellCoordinates}
-            cells={convertCellsData(data, cellSetHidden, cellSetProperties)}
+            cells={embedingData.current}
             mapping='PCA'
             cellSelection={selectedCellIds}
-            cellColors={
-              (selectedCell)
-                ? new Map(Object.entries({ ...cellColors, [selectedCell]: [0, 0, 0] }))
-                : new Map(Object.entries(cellColors))
+            cellColors={new Map(Object.entries({ ...cellColors, 1: [0, 0, 0] }))
+              // (selectedCell)
+              //   ? new Map(Object.entries({ ...cellColors, [selectedCell]: [0, 0, 0] }))
+              //   : new Map(Object.entries(cellColors))
+              // eslint-disable-next-line react/jsx-curly-newline
             }
             setViewState={({ zoom, target }) => {
               setCellRadius(cellRadiusFromZoom(zoom));

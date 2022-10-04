@@ -25,6 +25,7 @@ import HeatmapTracksCellInfo from 'components/data-exploration/heatmap/HeatmapTr
 import getContainingCellSetsProperties from 'utils/cellSets/getContainingCellSetsProperties';
 import useConditionalEffect from 'utils/customHooks/useConditionalEffect';
 import generateVitessceData from 'components/plots/helpers/heatmap/vitessce/generateVitessceData';
+import useLazyEffect from 'utils/customHooks/useLazyEffect';
 
 const COMPONENT_TYPE = 'interactiveHeatmap';
 
@@ -162,10 +163,8 @@ const HeatmapPlot = (props) => {
     }
   }, [louvainClusterCount]);
 
-  useEffect(() => {
-    if (cellHighlight) {
-      dispatch(updateCellInfo({ cellId: cellHighlight }));
-    }
+  useLazyEffect(() => {
+    dispatch(updateCellInfo({ cellId: cellHighlight }));
   }, [cellHighlight]);
 
   if (isHeatmapGenesLoading || !cellSets.accessible) {
