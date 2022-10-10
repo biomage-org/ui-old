@@ -1,7 +1,9 @@
 import _ from 'lodash';
 
 import ExpressionMatrix from 'utils/ExpressionMatrix/ExpressionMatrix';
-import { getOtherFourGenesMatrix, getOtherTwoGenesMatrix, getTwoGenesMatrix } from '__test__/utils/ExpressionMatrix/testMatrixes';
+import {
+  getOneGeneFull0Matrix, getOtherFourGenesMatrix, getOtherTwoGenesMatrix, getTwoGenesMatrix,
+} from '__test__/utils/ExpressionMatrix/testMatrixes';
 
 describe('ExpressionMatrix', () => {
   let matrix;
@@ -50,6 +52,18 @@ describe('ExpressionMatrix', () => {
       const {
         orderedGeneNames, rawExpression, truncatedExpression, zScore, stats,
       } = getTwoGenesMatrix();
+
+      matrix.pushGeneExpression(
+        orderedGeneNames, rawExpression, truncatedExpression, zScore, stats,
+      );
+
+      expect(matrix).toMatchSnapshot();
+    });
+
+    it('pushGeneExpression with empty gene expression works', () => {
+      const {
+        orderedGeneNames, rawExpression, truncatedExpression, zScore, stats,
+      } = getOneGeneFull0Matrix('Lyz2');
 
       matrix.pushGeneExpression(
         orderedGeneNames, rawExpression, truncatedExpression, zScore, stats,
@@ -149,6 +163,18 @@ describe('ExpressionMatrix', () => {
 
       // Nothing changed
       expect(matrix).toEqual(previousMatrix);
+    });
+
+    it('pushGeneExpression with empty gene expression works', () => {
+      const {
+        orderedGeneNames, rawExpression, truncatedExpression, zScore, stats,
+      } = getOneGeneFull0Matrix('NewGene');
+
+      matrix.pushGeneExpression(
+        orderedGeneNames, rawExpression, truncatedExpression, zScore, stats,
+      );
+
+      expect(matrix).toMatchSnapshot();
     });
   });
 });
