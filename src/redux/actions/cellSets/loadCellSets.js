@@ -7,18 +7,21 @@ import endUserMessages from 'utils/endUserMessages';
 
 const loadCellSets = (experimentId, forceReload = false) => async (dispatch, getState) => {
   const {
-    loading, error, updatingClustering,
+    loading, error, updatingClustering, initialLoadPending,
   } = getState().cellSets;
 
-  if (!forceReload && ((!loading && !error) || updatingClustering)) {
-    return null;
+  const loadingBlocked = loading || updatingClustering;
+  const requiresLoading = initialLoadPending || error;
+
+  const shouldLoad = requiresLoading && !loadingBlocked;
+
+  if (!shouldLoad && !forceReload) {
+    return;
   }
 
-  if (error) {
-    dispatch({
-      type: CELL_SETS_LOADING,
-    });
-  }
+  dispatch({
+    type: CELL_SETS_LOADING,
+  });
 
   try {
     const data = await fetchAPI(`/v2/experiments/${experimentId}/cellSets`);
@@ -32,7 +35,6 @@ const loadCellSets = (experimentId, forceReload = false) => async (dispatch, get
     });
   } catch (e) {
     const errorMessage = handleError(e, endUserMessages.ERROR_FETCHING_CELL_SETS);
-
     dispatch({
       type: CELL_SETS_ERROR,
       payload: { error: errorMessage },

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Vega } from 'react-vega';
+import 'vega-webgl-renderer';
 
 import { getCellSets, getCellSetsHierarchyByKeys } from 'redux/selectors';
 
@@ -93,20 +94,20 @@ const ViolinPlot = (props) => {
   }, [searchedGene]);
 
   useEffect(() => {
-    if (cellSets.loading && !cellSets.error) {
+    if (!cellSets.error) {
       dispatch(loadCellSets(experimentId));
     }
-  }, [experimentId, cellSets.loading, cellSets.error]);
+  }, [experimentId, cellSets.accessible, cellSets.error]);
 
   useEffect(() => {
     if (config
-      && Object.getOwnPropertyDescriptor(geneExpression.data, config.shownGene)
       && !geneExpression.error
-      && !cellSets.loading
-      && !cellSets.error) {
+      && geneExpression.matrix.geneIsLoaded(config.shownGene)
+      && cellSets.accessible) {
       const geneExpressionData = config.normalised === 'normalised'
-        ? geneExpression.data[config.shownGene].zScore
-        : geneExpression.data[config.shownGene].rawExpression.expression;
+        ? geneExpression.matrix.getZScore(config.shownGene)
+        : geneExpression.matrix.getRawExpression(config.shownGene);
+
       if (selectedCellSetClassAvailable) {
         const generatedPlotData = generateData(
           cellSets,
@@ -167,12 +168,13 @@ const ViolinPlot = (props) => {
 
     if (
       geneExpression.loading.length
-      || cellSets.loading
-      || highestDispersionLoading) {
+      || !cellSets.accessible
+      || highestDispersionLoading
+    ) {
       return <Loader experimentId={experimentId} />;
     }
 
-    return <Vega spec={plotSpec} renderer='canvas' />;
+    return <Vega spec={plotSpec} renderer='webgl' />;
   };
 
   return render();

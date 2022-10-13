@@ -2,9 +2,9 @@ import React from 'react';
 import _ from 'lodash';
 
 import { act } from 'react-dom/test-utils';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { mount } from 'enzyme';
-import { within } from '@testing-library/dom';
+import { waitFor, within } from '@testing-library/dom';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
 
@@ -246,8 +246,6 @@ describe('Dot plot page', () => {
   });
 
   it('Should show a no data error if user is using marker gene and selected filter sets are not represented in more than 1 group in the base cell set', async () => {
-    await renderDotPlot(storeState);
-
     seekFromS3
       .mockReset()
       // 1st call to list genes
@@ -258,7 +256,12 @@ describe('Dot plot page', () => {
       .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]())
       // 3rd call to load dot plot
       .mockImplementationOnce(() => null)
+      .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]())
+      // 4th call to load dot plot
+      .mockImplementationOnce(() => null)
       .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]());
+
+    await renderDotPlot(storeState);
 
     // Use marker genes
     await act(async () => {
@@ -274,32 +277,34 @@ describe('Dot plot page', () => {
     const selectBaseCells = screen.getByRole('combobox', { name: 'selectCellSets' });
 
     await act(async () => {
-      fireEvent.change(selectBaseCells, { target: { value: 'Samples' } });
+      userEvent.click(selectBaseCells);
     });
 
-    const baseOption = screen.getByText(/Samples/);
+    const baseOption = screen.getByTitle(/Samples/);
 
     await act(async () => {
-      fireEvent.click(baseOption);
+      userEvent.click(baseOption, undefined, { skipPointerEventsCheck: true });
     });
 
     // Select the filter sets
     const selectFilterCells = screen.getByRole('combobox', { name: 'selectPoints' });
 
     await act(async () => {
-      fireEvent.change(selectFilterCells, { target: { value: 'Samples' } });
+      userEvent.click(selectFilterCells);
     });
 
-    const filterOption = screen.getByText(/Copied WT2/);
+    const filterOption = screen.getByTitle(/Copied WT2/);
 
     await act(async () => {
-      fireEvent.click(filterOption);
+      userEvent.click(filterOption, undefined, { skipPointerEventsCheck: true });
     });
 
-    expect(screen.getByText(/There is no data to show/i)).toBeInTheDocument();
-    expect(screen.getByText(/The cell set that you have chosen to display is repesented by only one group/i)).toBeInTheDocument();
-    expect(screen.getByText(/A comparison can not be run to determine the top marker genes/i)).toBeInTheDocument();
-    expect(screen.getByText(/Select another option from the 'Select data' menu/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/There is no data to show/i)).toBeInTheDocument();
+      expect(screen.getByText(/The cell set that you have chosen to display is repesented by only one group/i)).toBeInTheDocument();
+      expect(screen.getByText(/A comparison can not be run to determine the top marker genes/i)).toBeInTheDocument();
+      expect(screen.getByText(/Select another option from the 'Select data' menu/i)).toBeInTheDocument();
+    });
   });
 
   it('removing a gene keeps the order', async () => {
@@ -357,8 +362,12 @@ describe('Dot plot page', () => {
       userEvent.click(option, undefined, { skipPointerEventsCheck: true });
     });
 
-    // check the search text is cleared after selecting a valid option
-    expect(searchBox.value).toBe('');
+    // check the search text is modified after selecting a valid option
+    expect(searchBox.value).toBe('Apoe, ');
+
+    const geneAddButton = screen.getByText('Add');
+
+    userEvent.click(geneAddButton);
 
     // check the selected gene was added
     expect(within(geneTree).getByText('Apoe')).toBeInTheDocument();
@@ -368,7 +377,7 @@ describe('Dot plot page', () => {
     expect(_.isEqual(initialOrder, getTreeGenes(geneTree))).toEqual(true);
   });
 
-  it('adds an already loaded gene and clears the input', async () => {
+  it('tries to select an already loaded gene and clears the input', async () => {
     await renderDotPlot(storeState);
 
     const searchBox = screen.getByRole('combobox');
@@ -394,8 +403,6 @@ describe('Dot plot page', () => {
   });
 
   it('resets the data', async () => {
-    await renderDotPlot(storeState);
-
     seekFromS3
       .mockReset()
       // 1st call to list genes
@@ -408,6 +415,8 @@ describe('Dot plot page', () => {
       .mockImplementationOnce(() => null)
       .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]());
 
+    await renderDotPlot(storeState);
+
     // add a gene to prepare for reset
     const searchBox = screen.getByRole('combobox');
 
@@ -419,7 +428,7 @@ describe('Dot plot page', () => {
       userEvent.click(option, undefined, { skipPointerEventsCheck: true });
     });
 
-    const resetButton = screen.getAllByText('Reset')[1];
+    const resetButton = screen.getByText('Reset Plot');
 
     await act(async () => {
       userEvent.click(resetButton);
@@ -471,7 +480,10 @@ describe('Drag and drop enzyme tests', () => {
 
     // antd renders 5 elements, use the first one
     tree = component.find({ 'data-testid': 'HierachicalTreeGenes' }).at(0);
-    loadedGenes = paginatedGeneExpressionData.rows.map((row) => (row.gene_names)).slice(0, 3).reverse();
+    loadedGenes = paginatedGeneExpressionData.rows
+      .map((row) => (row.gene_names))
+      .slice(0, 3)
+      .reverse();
   });
 
   it('changes nothing on drop in place', async () => {
@@ -484,31 +496,7 @@ describe('Drag and drop enzyme tests', () => {
     const info = {
       dragNode: { key: 1, pos: '0-1' },
       dropPosition: 1,
-      dropToGap: true,
-    };
-
-    tree.getElement().props.onDrop(info);
-
-    await act(async () => {
-      component.update();
-    });
-
-    const newOrder = getCurrentGeneOrder(component);
-
-    expect(_.isEqual(newOrder, loadedGenes)).toEqual(true);
-  });
-
-  it('changes nothing when not dropped in gap', async () => {
-    // default genes are in the tree
-    loadedGenes.forEach((geneName) => {
-      expect(tree.containsMatchingElement(geneName));
-    });
-
-    // not dropping to gap does nothing
-    const info = {
-      dragNode: { key: 0, pos: '0-0' },
-      dropPosition: 2,
-      dropToGap: false,
+      node: { dragOver: false },
     };
 
     tree.getElement().props.onDrop(info);
@@ -531,7 +519,7 @@ describe('Drag and drop enzyme tests', () => {
     const info = {
       dragNode: { key: 0, pos: '0-0' },
       dropPosition: 2,
-      dropToGap: true,
+      node: { dragOver: false },
     };
 
     tree.getElement().props.onDrop(info);

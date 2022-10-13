@@ -35,6 +35,7 @@ const UploadCell = (props) => {
     file,
   } = tableCellData;
   const { progress = null, status = null } = file?.upload ?? {};
+
   const [uploadDetailsModalVisible, setUploadDetailsModalVisible] = useState(false);
   const uploadDetailsModalDataRef = useRef(null);
 
@@ -145,6 +146,7 @@ const EditableFieldCell = (props) => {
           deleteEnabled={false}
           value={cellText}
           onAfterSubmit={(value) => onAfterSubmit(value)}
+          formatter={(value) => value.trim()}
         />
       </Space>
     </div>

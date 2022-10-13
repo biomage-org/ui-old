@@ -13,7 +13,7 @@ import PropTypes from 'prop-types';
 import pushNotificationMessage from 'utils/pushNotificationMessage';
 import endUserMessages from 'utils/endUserMessages';
 
-import { getCellSets, getCellSetsHierarchyByKeys, getCellSetsHierarchyByType } from 'redux/selectors';
+import { getCellSets, getCellSetsHierarchyByKeys } from 'redux/selectors';
 
 import HeatmapGroupBySettings from 'components/data-exploration/heatmap/HeatmapGroupBySettings';
 import HeatmapMetadataTracksSettings from 'components/data-exploration/heatmap/HeatmapMetadataTrackSettings';
@@ -120,7 +120,7 @@ const MarkerHeatmap = ({ experimentId }) => {
     const getCellIdsForCluster = (clusterId) => properties[clusterId].cellIds;
 
     const getAverageExpressionForGene = (gene, currentCellIds) => {
-      const expressionValues = expressionData.data[gene].rawExpression.expression;
+      const expressionValues = expressionData.matrix.getRawExpression(gene);
       let totalValue = 0;
       currentCellIds.forEach((cellId) => {
         totalValue += expressionValues[cellId];
@@ -139,6 +139,7 @@ const MarkerHeatmap = ({ experimentId }) => {
           maxAverageExpression.clusterId = clusterIndx;
         }
       });
+
       return maxAverageExpression.clusterId;
     };
 
@@ -156,6 +157,7 @@ const MarkerHeatmap = ({ experimentId }) => {
         }
       });
     });
+
     return newOrder;
   };
 
@@ -195,7 +197,7 @@ const MarkerHeatmap = ({ experimentId }) => {
   }, [loadedMarkerGenes, config?.selectedGenes]);
 
   useEffect(() => {
-    if (cellSets.loading
+    if (!cellSets.accessible
       || _.isEmpty(expressionData)
       || _.isEmpty(loadedMarkerGenes)
       || !loading
@@ -205,8 +207,8 @@ const MarkerHeatmap = ({ experimentId }) => {
     }
 
     const cellOrder = populateHeatmapData(cellSets, config, true);
-    const data = generateVegaData(cellOrder, expressionData, config, cellSets);
 
+    const data = generateVegaData(cellOrder, expressionData, config, cellSets);
     const spec = generateSpec(config, 'Cluster ID', data, true);
 
     spec.description = 'Marker heatmap';
@@ -313,7 +315,7 @@ const MarkerHeatmap = ({ experimentId }) => {
     ));
   };
 
-  if (!config || cellSets.loading || hierarchy.length === 0) {
+  if (!config || !cellSets.accessible || hierarchy.length === 0) {
     return (<Skeleton />);
   }
 
@@ -422,7 +424,7 @@ const MarkerHeatmap = ({ experimentId }) => {
 
     if (!config
       || loading.length > 0
-      || cellSets.loading
+      || !cellSets.accessible
       || loadingMarkerGenes
       || !config.selectedGenes.length) {
       return (<Loader experimentId={experimentId} />);

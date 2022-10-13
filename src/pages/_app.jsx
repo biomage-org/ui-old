@@ -21,7 +21,7 @@ import { initTracking } from 'utils/tracking';
 import UnauthorizedPage from 'pages/401';
 import NotFoundPage from 'pages/404';
 import Error from 'pages/_error';
-import APIError from 'utils/http/errors/APIError';
+import APIError from 'utils/errors/http/APIError';
 
 const mockCredentialsForInframock = () => {
   Credentials.get = async () => ({
@@ -52,10 +52,17 @@ Amplify.configure({
   ssr: true,
 });
 
+const addDashesToExperimentId = (experimentId) => experimentId.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
+
 const WrappedApp = ({ Component, pageProps }) => {
   const { httpError, amplifyConfig } = pageProps;
   const router = useRouter();
-  const { experimentId } = router.query;
+  const { experimentId: urlExperimentId } = router.query;
+
+  // If the experimentId exists (we are not is data management) and
+  // is the old version (without dashes), then add them
+  const experimentId = !urlExperimentId || urlExperimentId.includes('-') ? urlExperimentId : addDashesToExperimentId(urlExperimentId);
+
   const experimentData = useSelector(
     (state) => (experimentId ? state.experimentSettings.info : {}),
   );
@@ -116,8 +123,8 @@ const WrappedApp = ({ Component, pageProps }) => {
           <NotFoundPage
             title='Terms agreement required'
             subTitle='You cannot access your analysis in Cellenics until you have agreed to our updated privacy policy.'
-            hint='Go to data management to accept the terms.'
-            primaryActionText='Go to data management'
+            hint='Go to Data Management to accept the terms.'
+            primaryActionText='Go to Data Management'
           />
         );
       }

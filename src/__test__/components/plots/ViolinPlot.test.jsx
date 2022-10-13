@@ -11,7 +11,7 @@ import {
   initialPlotConfigStates,
 } from 'redux/reducers/componentConfig/initialState';
 import initialExperimentState from 'redux/reducers/experimentSettings/initialState';
-import genes from 'redux/reducers/genes/initialState';
+import getInitialState from 'redux/reducers/genes/getInitialState';
 import ViolinPlot from 'components/plots/ViolinPlot';
 import '__test__/test-utils/setupTests';
 
@@ -22,15 +22,22 @@ const plotUuid = 'ViolinMain'; // At some point this will stop being hardcoded
 
 const defaultStore = {
   cellSets: {
-    hierarchy: [{ key: 'louvain' }],
-    properties: {},
+    hierarchy: [{
+      key: 'louvain',
+      children: [{ key: 'louvain-0' }],
+    }],
+    properties: {
+      'louvain-0': {
+        cellIds: new Set([]),
+      },
+    },
   },
   componentConfig: initialComponentConfigStates,
   embeddings: {},
   experimentSettings: {
     ...initialExperimentState,
   },
-  genes,
+  genes: getInitialState(),
   backendStatus: {
     [experimentId]: {
       status: {},
@@ -69,6 +76,10 @@ describe('ViolinPlot', () => {
       cellSets: {
         hierarchy: [],
         error: 'Broken CellSet',
+        accessible: false,
+        loading: false,
+        updatingClustering: false,
+        initialLoadPending: false,
       },
     };
     renderViolinPlot(storeContents);

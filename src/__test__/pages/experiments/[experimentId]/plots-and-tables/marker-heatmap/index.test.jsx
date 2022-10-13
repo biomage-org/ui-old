@@ -52,6 +52,15 @@ jest.mock('object-hash', () => {
   return mockWorkResultETag(objectHash, mockWorkRequestETag, mockGeneExpressionETag);
 });
 
+// Disable local cache
+jest.mock('localforage', () => ({
+  getItem: () => Promise.resolve(undefined),
+  setItem: () => Promise.resolve(),
+  config: () => { },
+  ready: () => Promise.resolve(),
+  length: () => 0,
+}));
+
 jest.mock('utils/work/seekWorkResponse', () => ({
   __esModule: true,
   dispatchWorkRequest: jest.fn(() => true),
@@ -59,9 +68,9 @@ jest.mock('utils/work/seekWorkResponse', () => ({
 }));
 
 const mockWorkerResponses = {
-  '5-marker-genes': markerGenesData5,
-  '2-marker-genes': markerGenesData2,
-  'FAKEGENE-expression': expressionDataFAKEGENE,
+  '5-marker-genes': _.cloneDeep(markerGenesData5),
+  '2-marker-genes': _.cloneDeep(markerGenesData2),
+  'FAKEGENE-expression': _.cloneDeep(expressionDataFAKEGENE),
   ListGenes: geneList,
 };
 
@@ -131,10 +140,8 @@ describe('Marker heatmap plot', () => {
     seekFromS3
       .mockReset()
       // load gene list
-      .mockImplementationOnce(() => null)
       .mockImplementationOnce((Etag) => mockWorkerResponses[Etag])
       // load gene expression
-      .mockImplementationOnce(() => null)
       .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]);
 
     enableFetchMocks();
@@ -172,10 +179,8 @@ describe('Marker heatmap plot', () => {
     seekFromS3
       .mockReset()
       // load genes list
-      .mockImplementationOnce(() => null)
       .mockImplementationOnce((Etag) => mockWorkerResponses[Etag])
       // throw error on marker genes load
-      .mockImplementationOnce(() => null)
       .mockImplementationOnce(() => { throw new Error('Not found'); });
 
     await renderHeatmapPage(storeState);
@@ -191,7 +196,7 @@ describe('Marker heatmap plot', () => {
     await renderHeatmapPage(storeState);
 
     // Check that initially there are 5 marker genes - the default
-    markerGenesData5.order.forEach((geneName) => {
+    markerGenesData5.orderedGeneNames.forEach((geneName) => {
       expect(screen.getByText(geneName)).toBeInTheDocument();
     });
 
@@ -215,7 +220,7 @@ describe('Marker heatmap plot', () => {
     });
 
     // The genes in Data 2 should exist
-    markerGenesData2.order.forEach((geneName) => {
+    markerGenesData2.orderedGeneNames.forEach((geneName) => {
       expect(screen.getByText(geneName)).toBeInTheDocument();
     });
   });
@@ -224,19 +229,16 @@ describe('Marker heatmap plot', () => {
     seekFromS3
       .mockReset()
       // load genes list
-      .mockImplementationOnce(() => null)
       .mockImplementationOnce((Etag) => mockWorkerResponses[Etag])
       // 1st load
-      .mockImplementationOnce(() => null)
       .mockImplementationOnce((ETag) => mockWorkerResponses[ETag])
       // 2nd load
-      .mockImplementationOnce(() => null)
       .mockImplementationOnce((ETag) => mockWorkerResponses[ETag]);
 
     await renderHeatmapPage(storeState);
 
     // Add in a new gene
-    const genesToLoad = [...markerGenesData5.order, 'FAKEGENE'];
+    const genesToLoad = [...markerGenesData5.orderedGeneNames, 'FAKEGENE'];
 
     await act(async () => {
       await storeState.dispatch(loadGeneExpression(experimentId, genesToLoad, plotUuid));
@@ -275,17 +277,15 @@ describe('Marker heatmap plot', () => {
 
   it('Shows an error message if gene expression fails to load', async () => {
     seekFromS3
-      .mockReset()
-      // load genes list
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce((Etag) => mockWorkerResponses[Etag])
-      // throw error on gene expression load
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce(() => { throw new Error('Not found'); });
+      .mockImplementation((Etag) => {
+        if (Etag === '5-marker-genes' || Etag === 'ListGenes') return mockWorkerResponses[Etag];
+
+        if (Etag === 'FAKEGENE-expression') { throw new Error('Not found'); }
+      });
 
     await renderHeatmapPage(storeState);
 
-    const genesToLoad = [...markerGenesData5.order, 'FAKEGENE'];
+    const genesToLoad = [...markerGenesData5.orderedGeneNames, 'FAKEGENE'];
 
     await act(async () => {
       await storeState.dispatch(loadGeneExpression(experimentId, genesToLoad, plotUuid));
@@ -304,7 +304,7 @@ describe('Marker heatmap plot', () => {
     const geneTree = screen.getByRole('tree');
 
     // The genes in Data 5 should be in the tree
-    markerGenesData5.order.forEach((geneName) => {
+    markerGenesData5.orderedGeneNames.forEach((geneName) => {
       expect(within(geneTree).getByText(geneName)).toBeInTheDocument();
     });
 
@@ -355,14 +355,18 @@ describe('Marker heatmap plot', () => {
       userEvent.click(option, undefined, { skipPointerEventsCheck: true });
     });
 
-    // check the search text is cleared after selecting a valid option
-    expect(searchBox.value).toBe('');
+    // check the search text is modified after selecting a valid option
+    expect(searchBox.value).toBe('Tmem176a, ');
+
+    const geneAddButton = screen.getByText('Add');
+
+    userEvent.click(geneAddButton);
 
     // check the selected gene was added
     expect(within(geneTree).getByText('Tmem176a')).toBeInTheDocument();
   });
 
-  it('adds an already loaded gene and clears the input', async () => {
+  it('tries to select an already loaded gene and clears the input', async () => {
     await renderHeatmapPage(storeState);
 
     const searchBox = screen.getByRole('combobox');
@@ -399,10 +403,8 @@ describe('Drag and drop enzyme tests', () => {
     seekFromS3
       .mockReset()
       // load gene list
-      .mockImplementationOnce(() => null)
       .mockImplementationOnce((Etag) => mockWorkerResponses[Etag])
       // load gene expression
-      .mockImplementationOnce(() => null)
       .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]);
 
     enableFetchMocks();
@@ -427,7 +429,7 @@ describe('Drag and drop enzyme tests', () => {
 
   it('changes nothing on drop in place', async () => {
     // default genes are in the tree
-    markerGenesData5.order.forEach((geneName) => {
+    markerGenesData5.orderedGeneNames.forEach((geneName) => {
       expect(tree.containsMatchingElement(geneName));
     });
 
@@ -435,7 +437,7 @@ describe('Drag and drop enzyme tests', () => {
     const info = {
       dragNode: { key: 1, pos: '0-1' },
       dropPosition: 1,
-      dropToGap: true,
+      node: { dragOver: false },
     };
 
     tree.getElement().props.onDrop(info);
@@ -446,43 +448,19 @@ describe('Drag and drop enzyme tests', () => {
 
     const newOrder = getCurrentGeneOrder(component);
 
-    expect(_.isEqual(newOrder, markerGenesData5.order)).toEqual(true);
-  });
-
-  it('changes nothing when not dropped in gap', async () => {
-    // default genes are in the tree
-    markerGenesData5.order.forEach((geneName) => {
-      expect(tree.containsMatchingElement(geneName));
-    });
-
-    // not dropping to gap does nothing
-    const info = {
-      dragNode: { key: 1, pos: '0-1' },
-      dropPosition: 4,
-      dropToGap: false,
-    };
-
-    tree.getElement().props.onDrop(info);
-
-    await act(async () => {
-      component.update();
-    });
-
-    const newOrder = getCurrentGeneOrder(component);
-
-    expect(_.isEqual(newOrder, markerGenesData5.order)).toEqual(true);
+    expect(_.isEqual(newOrder, markerGenesData5.orderedGeneNames)).toEqual(true);
   });
 
   it('re-orders genes correctly', async () => {
     // default genes are in the tree
-    markerGenesData5.order.forEach((geneName) => {
+    markerGenesData5.orderedGeneNames.forEach((geneName) => {
       expect(tree.containsMatchingElement(geneName));
     });
     // dropping to gap re-orders genes
     const info = {
       dragNode: { key: 1, pos: '0-1' },
       dropPosition: 4,
-      dropToGap: true,
+      node: { dragOver: false },
     };
 
     tree.getElement().props.onDrop(info);
@@ -493,7 +471,7 @@ describe('Drag and drop enzyme tests', () => {
 
     const newOrder = getCurrentGeneOrder(component);
 
-    const expectedOrder = arrayMoveImmutable(markerGenesData5.order, 1, 3);
+    const expectedOrder = arrayMoveImmutable(markerGenesData5.orderedGeneNames, 1, 3);
 
     expect(_.isEqual(newOrder, expectedOrder)).toEqual(true);
   });

@@ -20,7 +20,7 @@ import {
 
 import PlotStyling from 'components/plots/styling/PlotStyling';
 import loadCellMeta from 'redux/actions/cellMeta';
-import generateDataProcessingPlotUuid from 'utils/generateDataProcessingPlotUuid';
+import { generateDataProcessingPlotUuid } from 'utils/generateCustomPlotUuid';
 import Loader from 'components/Loader';
 import { getCellSets } from 'redux/selectors';
 import CalculationConfig from 'components/data-processing/ConfigureEmbedding/CalculationConfig';
@@ -129,13 +129,16 @@ const ConfigureEmbedding = (props) => {
         panelTitle: 'Colour Inversion',
         controls: ['colourInversion'],
         footer: <Alert
-          message='Changing plot colours is not available here. Use the Data Management tool in Data Exploration to customise cell set and metadata colours'
+          message='Changing plot colours is not available here. Use the Cell sets and Metadata tool in Data Exploration to customise cell set and metadata colours'
           type='info'
         />,
       },
       {
         panelTitle: 'Markers',
-        controls: ['markers'],
+        controls: [{
+          name: 'markers',
+          props: { showShapeType: false },
+        }],
       },
       {
         panelTitle: 'Legend',
@@ -158,13 +161,16 @@ const ConfigureEmbedding = (props) => {
         panelTitle: 'Colours',
         controls: ['colourInversion'],
         footer: <Alert
-          message='Changing plot colours is not available here. Use the Data Management tool in Data Exploration to customise cell set and metadata colours'
+          message='Changing plot colours is not available here. Use the Cell sets and Metadata tool in Data Exploration to customise cell set and metadata colours'
           type='info'
         />,
       },
       {
         panelTitle: 'Markers',
-        controls: ['markers'],
+        controls: [{
+          name: 'markers',
+          props: { showShapeType: false },
+        }],
       },
       {
         panelTitle: 'Legend',
@@ -189,7 +195,10 @@ const ConfigureEmbedding = (props) => {
       },
       {
         panelTitle: 'Markers',
-        controls: ['markers'],
+        controls: [{
+          name: 'markers',
+          props: { showShapeType: false },
+        }],
       },
       {
         panelTitle: 'Legend',
@@ -203,7 +212,10 @@ const ConfigureEmbedding = (props) => {
       },
       {
         panelTitle: 'Markers',
-        controls: ['markers'],
+        controls: [{
+          name: 'markers',
+          props: { showShapeType: false },
+        }],
       },
       {
         panelTitle: 'Legend',
@@ -229,7 +241,7 @@ const ConfigureEmbedding = (props) => {
     },
     {
       panelTitle: 'Axes and margins',
-      controls: ['axes'],
+      controls: ['axesWithRanges'],
     },
     ...plotSpecificStylingControl[selectedPlot],
   ];
@@ -277,11 +289,7 @@ const ConfigureEmbedding = (props) => {
     const plotActions = {
       export: true,
     };
-    if (!cellSets.loading
-      && !cellSets.error
-      && !cellSets.updateCellSetsClustering
-      && selectedConfig
-    ) {
+    if (cellSets.accessible && selectedConfig) {
       setPlot(plots[selectedPlot].plot(selectedConfig, plotActions));
     }
   }, [selectedConfig, cellSets]);
@@ -301,7 +309,7 @@ const ConfigureEmbedding = (props) => {
       );
     }
 
-    if (selectedPlot === 'sample' && !cellSets.loading && isUnisample(cellSets.hierarchy)
+    if (selectedPlot === 'sample' && cellSets.accessible && isUnisample(cellSets.hierarchy)
     ) {
       return (
         <center>

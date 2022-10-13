@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
 import { Vega } from 'react-vega';
+import 'vega-webgl-renderer';
 
 import { loadCellSets } from 'redux/actions/cellSets';
 import { loadEmbedding } from 'redux/actions/embedding';
@@ -36,10 +37,10 @@ const ContinuousEmbeddingPlot = (props) => {
   const [plotSpec, setPlotSpec] = useState({});
 
   useEffect(() => {
-    if (cellSets.loading && !cellSets.error) {
-      dispatch(loadCellSets(experimentId));
-    }
+    dispatch(loadCellSets(experimentId));
+  }, []);
 
+  useEffect(() => {
     if (!embeddingSettings) {
       dispatch(loadProcessingSettings(experimentId));
     }
@@ -47,7 +48,7 @@ const ContinuousEmbeddingPlot = (props) => {
     if (!embeddingData && embeddingSettings?.method) {
       dispatch(loadEmbedding(experimentId, embeddingSettings?.method));
     }
-  }, [experimentId, embeddingSettings?.method]);
+  }, [embeddingSettings?.method]);
 
   useEffect(() => {
     changeEmbeddingAxesIfNecessary(config, embeddingSettings?.method, onUpdate);
@@ -58,8 +59,7 @@ const ContinuousEmbeddingPlot = (props) => {
       && !embeddingError
       && config
       && plotData?.length > 0
-      && !cellSets.loading
-      && !cellSets.error
+      && cellSets.accessible
       && embeddingData?.length) {
       setPlotSpec(
         generateSpec(
@@ -105,7 +105,7 @@ const ContinuousEmbeddingPlot = (props) => {
 
     if (!config
       || loading
-      || cellSets.loading
+      || !cellSets.accessible
       || embeddingLoading
       || Object.keys(plotSpec).length === 0) {
       return (
@@ -117,7 +117,7 @@ const ContinuousEmbeddingPlot = (props) => {
 
     return (
       <center>
-        <Vega spec={plotSpec} renderer='canvas' actions={actions} />
+        <Vega spec={plotSpec} renderer='webgl' actions={actions} />
       </center>
     );
   };
