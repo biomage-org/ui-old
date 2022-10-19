@@ -203,11 +203,8 @@ const fetchWork = async (
   optionals = {},
 ) => {
   const {
-    extras = undefined,
-    timeout = 180,
-    broadcast = false,
+    extras = undefined, timeout = 180, broadcast = false, fetchS3Data = true,
   } = optionals;
-
   const backendStatus = getBackendStatus(experimentId)(getState()).status;
 
   const { environment } = getState().networkResources;
@@ -241,8 +238,9 @@ const fetchWork = async (
     return data;
   }
 
+  console.log('BEFORE SEEK');
   // Then, we may be able to find this in S3.
-  let response = await seekFromS3(ETag, experimentId);
+  let response = await seekFromS3(ETag, experimentId, fetchS3Data);
 
   if (response) return response;
 
@@ -260,7 +258,7 @@ const fetchWork = async (
       },
     );
 
-    response = await seekFromS3(ETag, experimentId);
+    response = await seekFromS3(ETag, experimentId, fetchS3Data);
   } catch (error) {
     console.error('Error dispatching work request', error);
     throw error;

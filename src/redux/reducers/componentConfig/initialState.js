@@ -825,6 +825,12 @@ const dataIntegrationElbowPlotInitialConfig = {
   ],
 };
 
+const imgPlotConfig = {
+  plotType: 'ImgPlot',
+  shownGene: 'GZMA',
+  PlotSubType: 'ridgePlot',
+};
+
 const initialPlotConfigStates = {
   cellSizeDistributionHistogram,
   cellSizeDistributionKneePlot,
@@ -850,6 +856,7 @@ const initialPlotConfigStates = {
   dataIntegrationEmbedding: dataIntegrationEmbeddingInitialConfig,
   dataIntegrationFrequency: dataIntegrationFrequencyInitialConfig,
   dataIntegrationElbow: dataIntegrationElbowPlotInitialConfig,
+  ImgPlot: imgPlotConfig,
 };
 
 const initialComponentConfigStates = {

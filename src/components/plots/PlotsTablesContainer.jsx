@@ -99,6 +99,12 @@ const plots = [
         key: 'dot-key',
         link: 'dot-plot',
       },
+      {
+        name: plotNames.IMG_PLOT,
+        image: dotPlot,
+        key: 'img-plot-key',
+        link: 'img-plot',
+      },
     ],
   },
   {

@@ -34,6 +34,7 @@ const getDotPlot = (
   experimentId,
   plotUuid,
   config,
+  fetchS3Data,
 ) => async (dispatch, getState) => {
   const clusterNames = getClusterNames(getState());
   const timeout = getTimeoutForWorkerTask(getState(), 'PlotData');
@@ -61,7 +62,7 @@ const getDotPlot = (
     });
 
     const data = await fetchWork(
-      experimentId, body, getState, { timeout },
+      experimentId, body, getState, { timeout, fetchS3Data },
     );
 
     orderCellSets(data, getState(), config);
