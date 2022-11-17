@@ -837,12 +837,6 @@ const normalizedMatrixPlotConfig = {
   louvain: [],
   metadata: [],
   scratchpad: [],
-}
-
-const imgPlotConfig = {
-  plotType: 'ImgPlot',
-  shownGene: 'GZMA',
-  PlotSubType: 'ridgePlot',
 };
 
 const initialPlotConfigStates = {
@@ -871,7 +865,7 @@ const initialPlotConfigStates = {
   dataIntegrationEmbedding: dataIntegrationEmbeddingInitialConfig,
   dataIntegrationFrequency: dataIntegrationFrequencyInitialConfig,
   dataIntegrationElbow: dataIntegrationElbowPlotInitialConfig,
-  ImgPlot: imgPlotConfig,
+  imagePlots: [],
 };
 
 const initialComponentConfigStates = {

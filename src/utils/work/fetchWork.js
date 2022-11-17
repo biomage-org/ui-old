@@ -69,8 +69,8 @@ const fetchWork = async (
     extras = undefined,
     timeout = 180,
     broadcast = false,
-    fetchS3Data = true,
   } = optionals;
+
   const backendStatus = getBackendStatus(experimentId)(getState()).status;
 
   const { environment } = getState().networkResources;
@@ -115,10 +115,11 @@ const fetchWork = async (
     return data;
   }
 
-  console.log('BEFORE SEEK');
   // Then, we may be able to find this in S3.
-  let response = await seekFromS3(ETag, experimentId, fetchS3Data);
-  console.log('AFTER SEEK');
+  let response = await seekFromS3(ETag, experimentId, body.name);
+
+  if (response) return response;
+
   // If there is no response in S3, dispatch workRequest via the worker
   try {
     await dispatchWorkRequest(
@@ -139,12 +140,6 @@ const fetchWork = async (
     throw error;
   }
 
-  response = await seekFromS3(ETag, experimentId, fetchS3Data);
-
-  if (!fetchS3Data) { return response; }
-
-  // If a work response is in s3, it is cacheable
-  // (the cacheable or not option is managed in the worker)
   await cache.set(ETag, response);
 
   return response;

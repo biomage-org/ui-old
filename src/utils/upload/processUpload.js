@@ -88,13 +88,6 @@ const createAndUploadSingleFile = async (file, projectId, sampleId, dispatch, se
 
   let signedUrl;
   try {
-    print(
-      projectId,
-      sampleId,
-      fileType,
-      file.size,
-      metadata,
-      file)
     signedUrl = await dispatch(
       createSampleFile(
         projectId,
