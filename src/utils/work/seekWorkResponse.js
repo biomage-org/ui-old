@@ -26,7 +26,7 @@ const getRemainingWorkerStartTime = (creationTimestamp) => {
   return remainingTime + 60;
 };
 
-const seekFromS3 = async (ETag, experimentId, taskName) => {
+const seekFromS3 = async (ETag, experimentId, fetchS3Data = true) => {
   let response;
   try {
     const url = `/v2/workResults/${experimentId}/${ETag}`;
@@ -46,9 +46,12 @@ const seekFromS3 = async (ETag, experimentId, taskName) => {
     throwResponseError(storageResp);
   }
 
+  if (!fetchS3Data) {
+    return signedUrl;
+  }
+
   const unpackedResult = await unpackResult(storageResp);
   const parsedResult = parseResult(unpackedResult, taskName);
-
   return parsedResult;
 };
 
