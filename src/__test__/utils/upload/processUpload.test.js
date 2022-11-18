@@ -3,6 +3,7 @@ import thunk from 'redux-thunk';
 import waitForActions from 'redux-mock-store-await-actions';
 import axios from 'axios';
 import fetchMock, { enableFetchMocks } from 'jest-fetch-mock';
+import { v4 } from 'uuid';
 
 import { SAMPLES_FILE_UPDATE } from 'redux/actionTypes/samples';
 import initialSampleState, { sampleTemplate } from 'redux/reducers/samples/initialState';
@@ -20,15 +21,15 @@ import { sampleTech } from 'utils/constants';
 
 enableFetchMocks();
 
-const getValidFiles = (cellrangerVersion) => {
+const getValidFiles = (cellrangerVersion, sampleName = 'WT13') => {
   const filename = cellrangerVersion === 'v2' ? 'genes.tsv.gz' : 'features.tsv.gz';
 
   return ([
     {
-      name: `WT13/${filename}`,
+      name: `${sampleName}/${filename}`,
       fileObject: {
         name: filename,
-        path: `/WT13/${filename}`,
+        path: `/${sampleName}/${filename}`,
         type: 'application/gzip',
         size: 100,
       },
@@ -38,10 +39,10 @@ const getValidFiles = (cellrangerVersion) => {
       valid: true,
     },
     {
-      name: 'WT13/barcodes.tsv.gz',
+      name: `${sampleName}/barcodes.tsv.gz`,
       fileObject: {
         name: 'barcodes.tsv.gz',
-        path: '/WT13/barcodes.tsv.gz',
+        path: `/${sampleName}/barcodes.tsv.gz`,
         type: 'application/gzip',
         size: 100,
       },
@@ -51,10 +52,10 @@ const getValidFiles = (cellrangerVersion) => {
       valid: true,
     },
     {
-      name: 'WT13/matrix.mtx.gz',
+      name: `${sampleName}/matrix.mtx.gz`,
       fileObject: {
         name: 'matrix.mtx.gz',
-        path: '/WT13/matrix.mtx.gz',
+        path: `/${sampleName}/matrix.mtx.gz`,
         type: 'application/gzip',
         size: 100,
       },
@@ -118,9 +119,7 @@ jest.mock('utils/upload/loadAndCompressIfNecessary',
     },
   ));
 
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'sample-uuid'),
-}));
+jest.mock('uuid');
 
 jest.mock('axios', () => ({
   request: jest.fn(),
@@ -141,6 +140,8 @@ describe('processUpload', () => {
     fetchMock.mockResponse(JSON.stringify('theSignedUrl'), { status: 200 });
 
     store = mockStore(initialState);
+
+    v4.mockReturnValue('sample-uuid');
   });
 
   it('Uploads and updates redux correctly when there are no errors with cellranger v3', async () => {
@@ -315,6 +316,62 @@ describe('processUpload', () => {
       }],
       { matcher: waitForActions.matchers.containing },
     );
+  });
+
+  it('Uploads following alphabetical order for new samples', async () => {
+    const mockAxiosCalls = [];
+    const uploadSuccess = (params) => {
+      mockAxiosCalls.push(params);
+      return Promise.resolve('Resolved');
+    };
+
+    axios.request.mockImplementationOnce(uploadSuccess)
+      .mockImplementationOnce(uploadSuccess)
+      .mockImplementationOnce(uploadSuccess);
+
+    const firstSampleFiles = getValidFiles('v3', 'aaaFirstSample');
+    const secondSampleFiles = getValidFiles('v3', 'bbbSecondSample');
+    const thirdSampleFiles = getValidFiles('v3', 'cccThirdSample');
+
+    // Scramble the order in which they are sent
+    const allFiles = [thirdSampleFiles, firstSampleFiles, secondSampleFiles].flat();
+
+    const mockUuids = ['uuid3', 'uuid2', 'uuid1'];
+
+    v4
+      .mockReset()
+      .mockImplementation(() => mockUuids.pop());
+
+    await processUpload(
+      allFiles,
+      sampleType,
+      store.getState().samples,
+      mockExperimentId,
+      store.dispatch,
+    );
+
+    // Wait until all put promises are resolved
+    await flushPromises();
+
+    const first3Calls = fetchMock.mock.calls.slice(0, 3);
+
+    expect(first3Calls).toEqual([
+      [
+        expect.stringContaining('uuid1'),
+        // eslint-disable-next-line no-useless-escape
+        expect.objectContaining({ method: 'POST', body: expect.stringContaining('\"name\":\"aaaFirstSample\"') }),
+      ],
+      [
+        expect.stringContaining('uuid2'),
+        // eslint-disable-next-line no-useless-escape
+        expect.objectContaining({ method: 'POST', body: expect.stringContaining('\"name\":\"bbbSecondSample\"') }),
+      ],
+      [
+        expect.stringContaining('uuid3'),
+        // eslint-disable-next-line no-useless-escape
+        expect.objectContaining({ method: 'POST', body: expect.stringContaining('\"name\":\"cccThirdSample\"') }),
+      ],
+    ]);
   });
 
   it('Updates redux correctly when there are file load and compress errors', async () => {
