@@ -138,11 +138,7 @@ const processUpload = async (filesList, sampleType, samples, experimentId, dispa
   }, {});
 
   const samplesList = Object.entries(samplesMap);
-  samplesList.sort(([oneName], [otherName]) => (
-    oneName > otherName ? 1
-      : oneName < otherName ? -1
-        : 0
-  ));
+  samplesList.sort(([oneName], [otherName]) => oneName.localeCompare(otherName));
 
   samplesList.forEach(async ([name, sample]) => {
     const filesToUploadForSample = Object.keys(sample.files);
