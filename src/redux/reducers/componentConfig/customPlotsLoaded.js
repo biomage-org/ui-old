@@ -1,9 +1,10 @@
 const customPlotsLoaded = (state, action) => {
-  const { signedUrls } = action.payload;
+  const { signedUrls, keys } = action.payload;
   return {
     ...state,
     customPlots: {
       signedUrls,
+      keys,
     },
   };
 };
