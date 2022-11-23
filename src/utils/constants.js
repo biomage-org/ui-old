@@ -28,6 +28,7 @@ const plotTypes = {
   DOT_PLOT: 'DotPlot',
   TRAJECTORY_ANALYSIS: 'TrajectoryAnalysis',
   NORMALIZED_EXPRESSION_MATRIX: 'NormalizedExpressionMatrix',
+  IMG_PLOT: 'ImgPlot',
 };
 
 const plotNames = {
@@ -41,6 +42,7 @@ const plotNames = {
   DOT_PLOT: 'Dot Plot',
   TRAJECTORY_ANALYSIS: 'Trajectory Analysis',
   NORMALIZED_EXPRESSION_MATRIX: 'Normalized Expression Matrix',
+  IMG_PLOT: 'Image plot'
 };
 
 const layout = {

@@ -865,6 +865,7 @@ const initialPlotConfigStates = {
   dataIntegrationEmbedding: dataIntegrationEmbeddingInitialConfig,
   dataIntegrationFrequency: dataIntegrationFrequencyInitialConfig,
   dataIntegrationElbow: dataIntegrationElbowPlotInitialConfig,
+  imagePlots: [],
 };
 
 const initialComponentConfigStates = {

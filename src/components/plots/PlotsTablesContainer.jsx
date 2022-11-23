@@ -106,6 +106,12 @@ const plots = [
         key: 'normalized-matrix-key',
         link: 'normalized-matrix',
       },
+      {
+        name: plotNames.IMG_PLOT,
+        image: dotPlot,
+        key: 'img-plot-key',
+        link: 'img-plot',
+      },
     ],
   },
   {
