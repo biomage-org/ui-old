@@ -10,124 +10,124 @@ on:
     branches:
       - master
 jobs:
-  uncheck-integration-test:
-    name: Mark integration test as not run
-    runs-on: ubuntu-20.04
-    if: github.event_name == 'pull_request'
-    steps:
-      - id: get-pr-body
-        name: Get the current PR body
-        uses: jwalton/gh-find-current-pr@v1
-        with:
-          state: open
+  # uncheck-integration-test:
+  #   name: Mark integration test as not run
+  #   runs-on: ubuntu-20.04
+  #   if: github.event_name == 'pull_request'
+  #   steps:
+  #     - id: get-pr-body
+  #       name: Get the current PR body
+  #       uses: jwalton/gh-find-current-pr@v1
+  #       with:
+  #         state: open
 
-      - id: create-unchecked-pr-body
-        name: Create unchecked PR body
-        run: |-
-          UNCHECKED_BODY=$(sed 's/- \[[Xx]\] Started end-to-end tests on the latest commit./- \[ \] Started end-to-end tests on the latest commit./' <<\EOF
-          ${{ steps.get-pr-body.outputs.body }}
-          EOF
-          )
+  #     - id: create-unchecked-pr-body
+  #       name: Create unchecked PR body
+  #       run: |-
+  #         UNCHECKED_BODY=$(sed 's/- \[[Xx]\] Started end-to-end tests on the latest commit./- \[ \] Started end-to-end tests on the latest commit./' <<\EOF
+  #         ${{ steps.get-pr-body.outputs.body }}
+  #         EOF
+  #         )
 
-          UNCHECKED_BODY="${UNCHECKED_BODY//'%'/'%25'}"
-          UNCHECKED_BODY="${UNCHECKED_BODY//$'\n'/'%0A'}"
-          UNCHECKED_BODY="${UNCHECKED_BODY//$'\r'/'%0D'}"
+  #         UNCHECKED_BODY="${UNCHECKED_BODY//'%'/'%25'}"
+  #         UNCHECKED_BODY="${UNCHECKED_BODY//$'\n'/'%0A'}"
+  #         UNCHECKED_BODY="${UNCHECKED_BODY//$'\r'/'%0D'}"
 
-          echo "Unchecked PR body"
-          echo $UNCHECKED_BODY
+  #         echo "Unchecked PR body"
+  #         echo $UNCHECKED_BODY
 
-          echo "::set-output name=body::$UNCHECKED_BODY"
+  #         echo "::set-output name=body::$UNCHECKED_BODY"
 
-      - id: uncheck-integration-checkbox
-        name: Uncheck the integration checkbox
-        uses: tzkhan/pr-update-action@v2
-        with:
-          repo-token: ${{ secrets.API_TOKEN_GITHUB }}
-          head-branch-regex: ${{ github.head_ref }}
-          lowercase-branch: false
-          body-template: ${{  steps.create-unchecked-pr-body.outputs.body }}
-          body-update-action: replace
+  #     - id: uncheck-integration-checkbox
+  #       name: Uncheck the integration checkbox
+  #       uses: tzkhan/pr-update-action@v2
+  #       with:
+  #         repo-token: ${{ secrets.API_TOKEN_GITHUB }}
+  #         head-branch-regex: ${{ github.head_ref }}
+  #         lowercase-branch: false
+  #         body-template: ${{  steps.create-unchecked-pr-body.outputs.body }}
+  #         body-update-action: replace
 
-  build:
-    name: Build website
-    runs-on: ubuntu-20.04
-    env:
-      CI: true
-    steps:
-      - id: checkout
-        name: Check out source code
-        uses: actions/checkout@v3
+  # build:
+  #   name: Build website
+  #   runs-on: ubuntu-20.04
+  #   env:
+  #     CI: true
+  #   steps:
+  #     - id: checkout
+  #       name: Check out source code
+  #       uses: actions/checkout@v3
 
-      - id: setup-node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '14'
-          cache: 'npm'
+      # - id: setup-node
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '14'
+      #     cache: 'npm'
 
-      - id: install
-        name: Install dependencies
-        run: |-
-          echo "Running CI with "
-          echo "Node version: $(node --version)"
-          echo "NPM version: $(npm --version)"
+      # - id: install
+      #   name: Install dependencies
+      #   run: |-
+      #     echo "Running CI with "
+      #     echo "Node version: $(node --version)"
+      #     echo "NPM version: $(npm --version)"
 
-          git config --global url."https://".insteadOf ssh://
-          npm ci
+      #     git config --global url."https://".insteadOf ssh://
+      #     npm ci
 
-      - id: test
-        name: Run unit tests
-        uses: mattallty/jest-github-action@v1
-        env:
-          AWS_DEFAULT_REGION: eu-west-1
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          test-command: 'npm run coverage'
-          coverage-comment: false
+      # - id: test
+      #   name: Run unit tests
+      #   uses: mattallty/jest-github-action@v1
+      #   env:
+      #     AWS_DEFAULT_REGION: eu-west-1
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     test-command: 'npm run coverage'
+      #     coverage-comment: false
 
-      - id: upload-coverage
-        name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+      # - id: upload-coverage
+      #   name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v1
 
-      - id: next-cache-seek
-        name: Look up the Next.js build cache
-        uses: actions/cache@v2
-        with:
-          path: ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}
+      # - id: next-cache-seek
+      #   name: Look up the Next.js build cache
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ${{ github.workspace }}/.next/cache
+      #     key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}
 
-      - id: build
-        name: Build project
-        run: |-
-          npm run build
+      # - id: build
+      #   name: Build project
+      #   run: |-
+      #     npm run build
 
-      - id: upload-build-out
-        name: Upload Next.js build output
-        uses: actions/upload-artifact@v2
-        with:
-          name: next-build-out
-          path: |
-            .next/
-            !.next/cache
+      # - id: upload-build-out
+      #   name: Upload Next.js build output
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: next-build-out
+      #     path: |
+      #       .next/
+      #       !.next/cache
 
   build-docker:
     name: Build Docker container
     runs-on: ubuntu-20.04
-    needs: build
+    # needs: build
     outputs:
       ref-id: ${{ steps.ref.outputs.ref-id }}
       image-tag: ${{ steps.ref.outputs.image-tag }}
       timestamp: ${{ steps.ref.outputs.timestamp }}
     steps:
-      - id: checkout
-        name: Check out source code
-        uses: actions/checkout@v3
+      # - id: checkout
+      #   name: Check out source code
+      #   uses: actions/checkout@v3
 
-      - id: download-build-out
-        name: Download Next.js build output
-        uses: actions/download-artifact@v2
-        with:
-          name: next-build-out
-          path: .next/
+      # - id: download-build-out
+      #   name: Download Next.js build output
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: next-build-out
+      #     path: .next/
 
       - id: ref
         name: Format docker tag and repository name.
@@ -178,57 +178,57 @@ jobs:
           IMAGE_REPO_NAME=$(echo $GITHUB_REPOSITORY | awk -F '/' '{print $2}')
           echo "::set-output name=repo-name::$IMAGE_REPO_NAME"
 
-      - id: set-up-creds
-        name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-1
+      # - id: set-up-creds
+      #   name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v1
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: eu-west-1
 
-      - id: login-ecr
-        name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+      # - id: login-ecr
+      #   name: Login to Amazon ECR
+      #   uses: aws-actions/amazon-ecr-login@v1
 
-      - id: create-ecr-registry
-        name: Create an ECR repository (if needed)
-        # This will fail if the registry already exists, which is fine. If there is some other
-        # error, the `push` step will fail instead.
-        continue-on-error: true
-        run: |-
-          aws ecr create-repository --repository-name $REPO_NAME --image-tag-mutability IMMUTABLE
-        env:
-          REPO_NAME: ${{ steps.ref.outputs.repo-name }}
+      # - id: create-ecr-registry
+      #   name: Create an ECR repository (if needed)
+      #   # This will fail if the registry already exists, which is fine. If there is some other
+      #   # error, the `push` step will fail instead.
+      #   continue-on-error: true
+      #   run: |-
+      #     aws ecr create-repository --repository-name $REPO_NAME --image-tag-mutability IMMUTABLE
+      #   env:
+      #     REPO_NAME: ${{ steps.ref.outputs.repo-name }}
 
-      - id: setup-buildx
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      # - id: setup-buildx
+      #   name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v2
 
-      - id: build
-        name: Build Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64
-          tags: ${{ format('{0}/{1}:{2}', steps.login-ecr.outputs.registry, steps.ref.outputs.repo-name, steps.ref.outputs.image-tag) }}
-          push: false
-          load: true
-          build-args: READONLY_API_TOKEN_GITHUB=${{ secrets.READONLY_API_TOKEN_GITHUB }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # - id: build
+      #   name: Build Docker image
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     context: .
+      #     file: ./Dockerfile
+      #     platforms: linux/amd64
+      #     tags: ${{ format('{0}/{1}:{2}', steps.login-ecr.outputs.registry, steps.ref.outputs.repo-name, steps.ref.outputs.image-tag) }}
+      #     push: false
+      #     load: true
+      #     build-args: READONLY_API_TOKEN_GITHUB=${{ secrets.READONLY_API_TOKEN_GITHUB }}
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
       - id: push
         name: Push docker image to ECR
         run: |-
           echo Pushing image $IMAGE_NAME to ECR.
-          docker push $IMAGE_NAME
+          # docker push $IMAGE_NAME
 
           if [ ! -z "$TIMESTAMP" ]; then
-            echo Pushing timestamped $IMAGE_NAME to ECR
+            echo Pushing timestamped $IMAGE_NAME-$TIMESTAMP to ECR
 
-            docker tag $IMAGE_NAME $IMAGE_NAME-$TIMESTAMP
-            docker push $IMAGE_NAME-$TIMESTAMP
+            # docker tag $IMAGE_NAME $IMAGE_NAME-$TIMESTAMP
+            # docker push $IMAGE_NAME-$TIMESTAMP
           fi
         env:
           IMAGE_NAME: ${{ format('{0}/{1}:{2}', steps.login-ecr.outputs.registry, steps.ref.outputs.repo-name, steps.ref.outputs.image-tag) }}
@@ -356,63 +356,63 @@ jobs:
         env:
           REF_ID: ${{ needs.build-docker.outputs.ref-id }}
           IMAGE_TAG: ${{ needs.build-docker.outputs.image-tag }}
-          TIMESTAMP: ${{ steps.build-docker.outputs.timestamp }}
+          TIMESTAMP: ${{ needs.build-docker.outputs.timestamp }}
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
 
-      - name: Push production/develop template to releases repo for deployment
-        if: (matrix.environment == 'production' && github.event_name == 'release' && github.event.action == 'released') || (matrix.environment == 'develop' && github.event_name == 'push')
-        uses: dmnemec/copy_file_to_another_repo_action@v1.0.4
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-        with:
-          source_file: ${{ steps.fill-metadata.outputs.deployment-name }}.yaml
-          destination_repo: ${{ github.repository_owner }}/releases
-          destination_folder: ${{ steps.fill-metadata.outputs.kubernetes-env }}
-          user_email: ci@biomage.net
-          user_name: Biomage CI/CD
+  #     - name: Push production/develop template to releases repo for deployment
+  #       if: (matrix.environment == 'production' && github.event_name == 'release' && github.event.action == 'released') || (matrix.environment == 'develop' && github.event_name == 'push')
+  #       uses: dmnemec/copy_file_to_another_repo_action@v1.0.4
+  #       env:
+  #         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+  #       with:
+  #         source_file: ${{ steps.fill-metadata.outputs.deployment-name }}.yaml
+  #         destination_repo: ${{ github.repository_owner }}/releases
+  #         destination_folder: ${{ steps.fill-metadata.outputs.kubernetes-env }}
+  #         user_email: ci@biomage.net
+  #         user_name: Biomage CI/CD
 
-      - name: Change name of deployment file for staging deployment
-        if: (github.event_name == 'pull_request' || github.event_name == 'push') && matrix.environment == 'staging'
-        env:
-          DEPLOYMENT_NAME: ${{ steps.fill-metadata.outputs.deployment-name }}
-          REF_ID: ${{ needs.build-docker.outputs.ref-id }}
-        run: |-
-          mv $DEPLOYMENT_NAME.yaml $REF_ID.yaml
+  #     - name: Change name of deployment file for staging deployment
+  #       if: (github.event_name == 'pull_request' || github.event_name == 'push') && matrix.environment == 'staging'
+  #       env:
+  #         DEPLOYMENT_NAME: ${{ steps.fill-metadata.outputs.deployment-name }}
+  #         REF_ID: ${{ needs.build-docker.outputs.ref-id }}
+  #       run: |-
+  #         mv $DEPLOYMENT_NAME.yaml $REF_ID.yaml
 
-      - name: Push staging deployment template to releases
-        if: (github.event_name == 'pull_request' || github.event_name == 'push') && matrix.environment == 'staging'
-        uses: dmnemec/copy_file_to_another_repo_action@v1.0.4
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-        with:
-          source_file: ${{ needs.build-docker.outputs.ref-id }}.yaml
-          destination_repo: ${{ github.repository_owner }}/flux-v2-migration
-          destination_folder: staging-candidates/${{ steps.fill-metadata.outputs.deployment-name }}
-          user_email: ci@biomage.net
-          user_name: 'Biomage CI/CD'
+  #     - name: Push staging deployment template to releases
+  #       if: (github.event_name == 'pull_request' || github.event_name == 'push') && matrix.environment == 'staging'
+  #       uses: dmnemec/copy_file_to_another_repo_action@v1.0.4
+  #       env:
+  #         API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
+  #       with:
+  #         source_file: ${{ needs.build-docker.outputs.ref-id }}.yaml
+  #         destination_repo: ${{ github.repository_owner }}/flux-v2-migration
+  #         destination_folder: staging-candidates/${{ steps.fill-metadata.outputs.deployment-name }}
+  #         user_email: ci@biomage.net
+  #         user_name: 'Biomage CI/CD'
 
-  ready-to-merge:
-    name: Ready for merging
-    runs-on: ubuntu-20.04
-    needs: deploy
-    steps:
-      - id: ready-to-merge
-        name: Signal readiness to merge
-        run: |-
-          exit 0
+  # ready-to-merge:
+  #   name: Ready for merging
+  #   runs-on: ubuntu-20.04
+  #   needs: deploy
+  #   steps:
+  #     - id: ready-to-merge
+  #       name: Signal readiness to merge
+  #       run: |-
+  #         exit 0
 
-  report-if-failed:
-    name: Report if workflow failed
-    runs-on: ubuntu-20.04
-    needs: [build, build-docker, deploy]
-    if: failure() && github.ref == 'refs/heads/master'
-    steps:
-      - id: send-to-slack
-        name: Send failure notification to Slack on failure
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.WORKFLOW_STATUS_BOT_TOKEN }}
-        uses: voxmedia/github-action-slack-notify-build@v1
-        with:
-          channel: workflow-failures
-          status: FAILED
-          color: danger
+  # report-if-failed:
+  #   name: Report if workflow failed
+  #   runs-on: ubuntu-20.04
+  #   needs: [build, build-docker, deploy]
+  #   if: failure() && github.ref == 'refs/heads/master'
+  #   steps:
+  #     - id: send-to-slack
+  #       name: Send failure notification to Slack on failure
+  #       env:
+  #         SLACK_BOT_TOKEN: ${{ secrets.WORKFLOW_STATUS_BOT_TOKEN }}
+  #       uses: voxmedia/github-action-slack-notify-build@v1
+  #       with:
+  #         channel: workflow-failures
+  #         status: FAILED
+  #         color: danger
