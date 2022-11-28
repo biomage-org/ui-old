@@ -148,19 +148,19 @@ jobs:
 
           TIMESTAMP=$(date +%s)
 
-          if [ "${{ github.event_name }}" = "release" ] && [ "${{ github.event.action }}" = "released" ]; then
+          # if [ "${{ github.event_name }}" = "release" ] && [ "${{ github.event.action }}" = "released" ]; then
             COMMIT_SHA=""
             IMAGE_TAG="${REF_ID/refs-tags-/}"
             TIMESTAMP=""
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
-            IMAGE_TAG="$REF_ID-$COMMIT_SHA"
-            TIMESTAMP=$TIMESTAMP
-          else
-            COMMIT_SHA=$GITHUB_SHA
-            IMAGE_TAG="$REF_ID-$COMMIT_SHA"
-            TIMESTAMP=$TIMESTAMP
-          fi
+          # elif [ "${{ github.event_name }}" = "pull_request" ]; then
+          #   COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
+          #   IMAGE_TAG="$REF_ID-$COMMIT_SHA"
+          #   TIMESTAMP=$TIMESTAMP
+          # else
+          #   COMMIT_SHA=$GITHUB_SHA
+          #   IMAGE_TAG="$REF_ID-$COMMIT_SHA"
+          #   TIMESTAMP=$TIMESTAMP
+          # fi
 
           # IMAGE_TAG is used in the Build Docker Image step.
           # We can easily build the image-tag from REF_ID and COMMIT_SHA for non-production releases.
