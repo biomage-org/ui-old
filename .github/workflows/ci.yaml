@@ -17,6 +17,7 @@ concurrency:
 jobs:
   test-variable:
     name: Test variable
+    runs-on: ubuntu-20.04
     steps:
       - id: test-variable
         name: test variable
