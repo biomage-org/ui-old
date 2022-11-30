@@ -23,10 +23,7 @@ jobs:
         name: test variable
         run: |-
           echo "github.pull_request.head.ref"
-          echo "${{ github.pull_request.head.ref }}"
-
-          echo "github"
-          echo "${{ github }}"
+          echo "$GITHUB_HEAD_REF"
 
   # uncheck-integration-test:
   #   name: Mark integration test as not run
