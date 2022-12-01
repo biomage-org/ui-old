@@ -1,3 +1,5 @@
+// Some comment
+
 import '../../assets/self-styles.less';
 import '../../assets/nprogress.css';
 
