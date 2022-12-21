@@ -16,6 +16,7 @@ import {
 import _ from 'lodash';
 import PlotStyling from 'components/plots/styling/PlotStyling';
 import MultiTileContainer from 'components/MultiTileContainer';
+import loadConditionalComponentConfig from 'redux/actions/componentConfig/loadConditionalComponentConfig';
 
 const PLOT = 'Plot';
 const CONTROLS = 'Controls';
@@ -38,6 +39,7 @@ const PlotContainer = (props) => {
   const [isResetDisabled, setIsResetDisabled] = useState(true);
   const [tileDirection, setTileDirection] = useState(DEFAULT_ORIENTATION);
   const { config } = useSelector((state) => state.componentConfig[plotUuid] || {});
+  const savedPlotsConfig = useSelector((state) => state.componentConfig.savedPlots?.config || {});
   const debounceSave = useCallback(
     _.debounce(() => dispatch(savePlotConfig(experimentId, plotUuid)), saveDebounceTime), [plotUuid],
   );
@@ -68,6 +70,7 @@ const PlotContainer = (props) => {
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);
+    dispatch(loadConditionalComponentConfig(experimentId, 'savedPlots', 'savedPlots', false));
   }, []);
 
   useEffect(() => {
@@ -88,6 +91,9 @@ const PlotContainer = (props) => {
     setIsResetDisabled(true);
   };
 
+  const onClickSaveAs = () => {
+  };
+
   if (!config) {
     return (
       <div style={{ paddingLeft: '2em' }}>
@@ -99,6 +105,16 @@ const PlotContainer = (props) => {
   const renderPlotToolbarControls = () => (
     <Space style={{ marginRight: '0.5em' }}>
       {extraToolbarControls}
+      {
+        <Button
+          key='save-plot'
+          type='primary'
+          size='small'
+          onClick={onClickSaveAs}
+        >
+          Save as...
+        </Button>
+      }
       {showResetButton ? (
         <Button
           key='reset-plot'
@@ -181,6 +197,7 @@ const PlotContainer = (props) => {
       style={{ backgroundColor: 'white' }}
       tileMap={TILE_MAP}
       initialArrangement={windows}
+      plotType={plotType}
     />
   );
 };

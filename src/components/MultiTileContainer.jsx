@@ -4,6 +4,7 @@ import { Mosaic, MosaicWindow } from 'react-mosaic-component';
 import ReactResizeDetector from 'react-resize-detector';
 import 'react-mosaic-component/react-mosaic-component.css';
 import { layout } from 'utils/constants';
+import PlotTileTitle from 'components/PlotTileTitle';
 
 const renderWindow = (tile, width, height, style) => {
   if (!tile) return <></>;
@@ -20,7 +21,7 @@ const renderWindow = (tile, width, height, style) => {
   );
 };
 
-const MultiTileContainer = ({ tileMap, initialArrangement }) => (
+const MultiTileContainer = ({ tileMap, initialArrangement, plotType }) => (
   <div style={{ height: '100%', width: '100%', margin: 0 }}>
     <Mosaic
       renderTile={(id, path) => (
@@ -33,7 +34,7 @@ const MultiTileContainer = ({ tileMap, initialArrangement }) => (
           {({ width, height }) => (
             <MosaicWindow
               path={path}
-              title={id}
+              title={id === 'Plot' ? <PlotTileTitle plotType={plotType} /> : id}
               toolbarControls={tileMap[id]?.toolbarControls}
             >
               {renderWindow(tileMap[id]?.component, width, height, tileMap[id]?.style)}
@@ -52,6 +53,11 @@ MultiTileContainer.propTypes = {
     PropTypes.string,
     PropTypes.object,
   ]).isRequired,
+  plotType: PropTypes.string,
+};
+
+MultiTileContainer.defaultProps = {
+  plotType: '',
 };
 
 export default MultiTileContainer;
