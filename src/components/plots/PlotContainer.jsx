@@ -17,6 +17,7 @@ import _ from 'lodash';
 import PlotStyling from 'components/plots/styling/PlotStyling';
 import MultiTileContainer from 'components/MultiTileContainer';
 import loadConditionalComponentConfig from 'redux/actions/componentConfig/loadConditionalComponentConfig';
+import SavePlotModal from 'components/SavePlotModal';
 
 const PLOT = 'Plot';
 const CONTROLS = 'Controls';
@@ -38,8 +39,8 @@ const PlotContainer = (props) => {
 
   const [isResetDisabled, setIsResetDisabled] = useState(true);
   const [tileDirection, setTileDirection] = useState(DEFAULT_ORIENTATION);
+  const [savePlotModalVisible, setSavePlotModalVisible] = useState(false);
   const { config } = useSelector((state) => state.componentConfig[plotUuid] || {});
-  const savedPlotsConfig = useSelector((state) => state.componentConfig.savedPlots?.config || {});
   const debounceSave = useCallback(
     _.debounce(() => dispatch(savePlotConfig(experimentId, plotUuid)), saveDebounceTime), [plotUuid],
   );
@@ -92,6 +93,7 @@ const PlotContainer = (props) => {
   };
 
   const onClickSaveAs = () => {
+    setSavePlotModalVisible(true);
   };
 
   if (!config) {
@@ -193,12 +195,21 @@ const PlotContainer = (props) => {
   }
 
   return (
-    <MultiTileContainer
-      style={{ backgroundColor: 'white' }}
-      tileMap={TILE_MAP}
-      initialArrangement={windows}
-      plotType={plotType}
-    />
+    <>
+      {savePlotModalVisible ? (
+        <SavePlotModal
+          plotType={plotType}
+          onExit={() => setSavePlotModalVisible(false)}
+        />
+      ) : <></>}
+      <MultiTileContainer
+        style={{ backgroundColor: 'white' }}
+        tileMap={TILE_MAP}
+        initialArrangement={windows}
+        plotType={plotType}
+      />
+    </>
+
   );
 };
 
