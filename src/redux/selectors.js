@@ -25,6 +25,9 @@ const getCellSetsHierarchyByKeys = (...params) => (state) => (
 const getPlotConfigs = (...params) => (state) => (
   componentConfigSelectors.getPlotConfigs(...params)(state.componentConfig));
 
+const getSavedPlots = (...params) => (state) => (
+  componentConfigSelectors.getSavedPlots(...params)(state.componentConfig));
+
 const getGeneList = (...params) => (state) => (
   genesSelectors.getGeneList(...params)(state.genes));
 
@@ -35,5 +38,6 @@ export {
   getCellSetsHierarchyByType,
   getCellSetsHierarchyByKeys,
   getPlotConfigs,
+  getSavedPlots,
   getGeneList,
 };
