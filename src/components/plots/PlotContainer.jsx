@@ -198,6 +198,8 @@ const PlotContainer = (props) => {
     <>
       {savePlotModalVisible ? (
         <SavePlotModal
+          experimentId={experimentId}
+          config={config}
           plotType={plotType}
           onExit={() => setSavePlotModalVisible(false)}
         />

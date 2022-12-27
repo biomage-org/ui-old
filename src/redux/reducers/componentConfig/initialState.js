@@ -334,27 +334,57 @@ const multiViewInitialConfig = {
 // PLOTS & TABLES - Saved plots
 const savedPlotsInitialConfig = {
   selectedPlots: {
-    [plotTypes.CONTINUOUS_EMBEDDING]: 0,
-    [plotTypes.CATEGORICAL_EMBEDDING]: 0,
-    [plotTypes.HEATMAP]: 0,
-    [plotTypes.MARKER_HEATMAP]: 0,
-    [plotTypes.VOLCANO_PLOT]: 0,
-    [plotTypes.FREQUENCY_PLOT]: 0,
-    [plotTypes.VIOLIN_PLOT]: 0,
-    [plotTypes.DOT_PLOT]: 0,
-    [plotTypes.TRAJECTORY_ANALYSIS]: 0,
-    [plotTypes.NORMALIZED_EXPRESSION_MATRIX]: 0,
+    [plotTypes.CONTINUOUS_EMBEDDING]: plotUuids.CONTINUOUS_EMBEDDING,
+    [plotTypes.CATEGORICAL_EMBEDDING]: plotUuids.CATEGORICAL_EMBEDDING,
+    [plotTypes.HEATMAP]: plotUuids.HEATMAP,
+    [plotTypes.MARKER_HEATMAP]: plotUuids.MARKER_HEATMAP,
+    [plotTypes.VOLCANO_PLOT]: plotUuids.VOLCANO_PLOT,
+    [plotTypes.FREQUENCY_PLOT]: plotUuids.FREQUENCY_PLOT,
+    [plotTypes.VIOLIN_PLOT]: plotUuids.VIOLIN_PLOT,
+    [plotTypes.DOT_PLOT]: plotUuids.DOT_PLOT,
+    [plotTypes.TRAJECTORY_ANALYSIS]: plotUuids.TRAJECTORY_ANALYSIS,
+    [plotTypes.NORMALIZED_EXPRESSION_MATRIX]: plotUuids.NORMALIZED_EXPRESSION_MATRIX,
   },
-  [plotTypes.CONTINUOUS_EMBEDDING]: [plotUuids.CONTINUOUS_EMBEDDING],
-  [plotTypes.CATEGORICAL_EMBEDDING]: [plotUuids.CONTINUOUS_EMBEDDING],
-  [plotTypes.HEATMAP]: [plotUuids.HEATMAP],
-  [plotTypes.MARKER_HEATMAP]: [plotUuids.MARKER_HEATMAP],
-  [plotTypes.VOLCANO_PLOT]: [plotUuids.VOLCANO_PLOT],
-  [plotTypes.FREQUENCY_PLOT]: [plotUuids.FREQUENCY_PLOT],
-  [plotTypes.VIOLIN_PLOT]: [plotUuids.VIOLIN_PLOT],
-  [plotTypes.DOT_PLOT]: [plotUuids.DOT_PLOT],
-  [plotTypes.TRAJECTORY_ANALYSIS]: [plotUuids.TRAJECTORY_ANALYSIS],
-  [plotTypes.NORMALIZED_EXPRESSION_MATRIX]: [plotUuids.NORMALIZED_EXPRESSION_MATRIX],
+  [plotTypes.CONTINUOUS_EMBEDDING]: {
+    plots: [plotUuids.CONTINUOUS_EMBEDDING],
+    descriptions: [''],
+  },
+  [plotTypes.CATEGORICAL_EMBEDDING]: {
+    plots: [plotUuids.CATEGORICAL_EMBEDDING],
+    descriptions: [''],
+  },
+  [plotTypes.HEATMAP]: {
+    plots: [plotUuids.HEATMAP],
+    descriptions: [''],
+  },
+  [plotTypes.MARKER_HEATMAP]: {
+    plots: [plotUuids.MARKER_HEATMAP],
+    descriptions: [''],
+  },
+  [plotTypes.VOLCANO_PLOT]: {
+    plots: [plotUuids.VOLCANO_PLOT],
+    descriptions: [''],
+  },
+  [plotTypes.FREQUENCY_PLOT]: {
+    plots: [plotUuids.FREQUENCY_PLOT],
+    descriptions: [''],
+  },
+  [plotTypes.VIOLIN_PLOT]: {
+    plots: [plotUuids.VIOLIN_PLOT],
+    descriptions: [''],
+  },
+  [plotTypes.DOT_PLOT]: {
+    plots: [plotUuids.DOT_PLOT],
+    descriptions: [''],
+  },
+  [plotTypes.TRAJECTORY_ANALYSIS]: {
+    plots: [plotUuids.TRAJECTORY_ANALYSIS],
+    descriptions: [''],
+  },
+  [plotTypes.NORMALIZED_EXPRESSION_MATRIX]: {
+    plots: [plotUuids.NORMALIZED_EXPRESSION_MATRIX],
+    descriptions: [''],
+  },
 };
 
 // EMBEDDING PREVIEW - Coloured by sample

@@ -12,16 +12,18 @@ import {
 import validateInputs, { rules } from 'utils/validateInputs';
 import { plotTypes } from 'utils/constants';
 import { updatePlotConfig } from 'redux/actions/componentConfig';
+import { getSavedPlots } from 'redux/selectors';
+import loadConditionalComponentConfig from 'redux/actions/componentConfig/loadConditionalComponentConfig';
 
 const { Text } = Typography;
 const { TextArea } = Input;
 
 const savedPlotsUuid = 'savedPlots';
 
-const SavePlotModal = ({ plotType, onExit }) => {
+const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
   const dispatch = useDispatch();
 
-  const savedPlotsConfig = useSelector((state) => state.componentConfig[savedPlotsUuid]?.config);
+  const savedPlots = useSelector(getSavedPlots());
 
   const [plotNames, setPlotNames] = useState(new Set());
   const [plotName, setPlotName] = useState('');
@@ -39,19 +41,27 @@ const SavePlotModal = ({ plotType, onExit }) => {
   };
 
   useEffect(() => {
-    setPlotNames(new Set(Object.values(plotTypes).map((type) => savedPlotsConfig[type]).flat()));
-  }, [savedPlotsConfig]);
+    setPlotNames(new Set(Object.values(plotTypes).map((type) => savedPlots[type].plots).flat()));
+  }, [savedPlots]);
 
   useEffect(() => {
     setIsValidName(validateInputs(plotName, validationChecks, validationParams).isValid);
   }, [plotName]);
 
   const submit = () => {
-    setPlotName('');
-
     dispatch(updatePlotConfig(
-      savedPlotsUuid, { [plotType]: [...savedPlotsConfig[plotType], plotName] },
+      savedPlotsUuid,
+      {
+        [plotType]: {
+          plots: [...savedPlots[plotType].plots, plotName],
+          descriptions: [...savedPlots[plotType].descriptions, plotDescription],
+        },
+      },
     ));
+
+    dispatch(loadConditionalComponentConfig(experimentId, plotName, plotType, true, config));
+
+    setPlotName('');
 
     onExit();
   };
@@ -63,7 +73,7 @@ const SavePlotModal = ({ plotType, onExit }) => {
       footer={(
         <Button
           type='primary'
-          key='create'
+          key='save'
           block
           disabled={!isValidName}
           onClick={() => {
@@ -128,6 +138,8 @@ const SavePlotModal = ({ plotType, onExit }) => {
 };
 
 SavePlotModal.propTypes = {
+  experimentId: PropTypes.string.isRequired,
+  config: PropTypes.object.isRequired,
   plotType: PropTypes.string.isRequired,
   onExit: PropTypes.func.isRequired,
 };
