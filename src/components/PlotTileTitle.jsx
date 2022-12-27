@@ -29,8 +29,6 @@ const PlotTileTitle = ({ plotType }) => {
     }
   }, [savedPlots]);
 
-  console.log(plotOptions);
-
   return (
     <Select
       options={[{ label: 'Exploration Plot', value: defaultPlotUuid }, ...plotOptions]}

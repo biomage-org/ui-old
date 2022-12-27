@@ -35,7 +35,6 @@ import { plotNames, plotTypes, plotUuids } from 'utils/constants';
 import PlatformError from 'components/PlatformError';
 
 import ScrollOnDrag from 'components/plots/ScrollOnDrag';
-import loadConditionalComponentConfig from 'redux/actions/componentConfig/loadConditionalComponentConfig';
 
 const { Panel } = Collapse;
 
@@ -111,16 +110,6 @@ const DotPlotPage = (props) => {
     if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
     if (cellSets.hierarchy.length === 0) dispatch(loadCellSets(experimentId));
   }, []);
-
-  useEffect(() => {
-    if (!savedPlots) return;
-
-    const selectedPlotUuid = savedPlots.selectedPlots[plotType];
-
-    if (plotUuid !== selectedPlotUuid) {
-      setPlotUuid(selectedPlotUuid);
-    }
-  }, [savedPlots]);
 
   const previousComparedConfig = useRef(null);
   const getComparedConfig = (updatedConfig) => _.pick(
@@ -208,6 +197,24 @@ const DotPlotPage = (props) => {
     const data = plotData.filter((elem) => !genes.includes(elem.geneName));
     dispatch(updatePlotData(plotUuid, data));
   };
+
+  useEffect(() => {
+    if (!savedPlots) return;
+
+    const selectedPlotUuid = savedPlots.selectedPlots[plotType];
+
+    if (plotUuid === selectedPlotUuid) return;
+
+    setPlotUuid(selectedPlotUuid);
+  }, [savedPlots]);
+
+  useEffect(() => {
+    if (!shouldFetchPlotData()) return;
+
+    if (plotData.length > 0) return;
+
+    dispatch(getDotPlot(experimentId, plotUuid, config));
+  }, [plotUuid]);
 
   useEffect(() => {
     if (!shouldFetchPlotData()) return;
