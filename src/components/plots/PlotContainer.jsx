@@ -18,6 +18,7 @@ import PlotStyling from 'components/plots/styling/PlotStyling';
 import MultiTileContainer from 'components/MultiTileContainer';
 import loadConditionalComponentConfig from 'redux/actions/componentConfig/loadConditionalComponentConfig';
 import SavePlotModal from 'components/SavePlotModal';
+import { getSavedPlots } from 'redux/selectors';
 
 const PLOT = 'Plot';
 const CONTROLS = 'Controls';
@@ -41,6 +42,7 @@ const PlotContainer = (props) => {
   const [tileDirection, setTileDirection] = useState(DEFAULT_ORIENTATION);
   const [savePlotModalVisible, setSavePlotModalVisible] = useState(false);
   const { config } = useSelector((state) => state.componentConfig[plotUuid] || {});
+  const savedPlots = useSelector(getSavedPlots());
   const debounceSave = useCallback(
     _.debounce(() => dispatch(savePlotConfig(experimentId, plotUuid)), saveDebounceTime), [plotUuid],
   );
@@ -85,6 +87,10 @@ const PlotContainer = (props) => {
       isConfigEqual(config, initialPlotConfigStates[plotType]),
     );
   }, [config]);
+
+  useEffect(() => {
+    dispatch(savePlotConfig(experimentId, 'savedPlots'));
+  }, [savedPlots]);
 
   const onClickReset = () => {
     onPlotReset();
