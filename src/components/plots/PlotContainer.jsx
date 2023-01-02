@@ -46,6 +46,9 @@ const PlotContainer = (props) => {
   const debounceSave = useCallback(
     _.debounce(() => dispatch(savePlotConfig(experimentId, plotUuid)), saveDebounceTime), [plotUuid],
   );
+  const debounceSaveSavedPlots = useCallback(
+    _.debounce(() => dispatch(savePlotConfig(experimentId, 'savedPlots')), saveDebounceTime), [],
+  );
 
   const defaultOnUpdate = (obj) => {
     dispatch(updatePlotConfig(plotUuid, obj));
@@ -89,7 +92,9 @@ const PlotContainer = (props) => {
   }, [config]);
 
   useEffect(() => {
-    dispatch(savePlotConfig(experimentId, 'savedPlots'));
+    if (!savedPlots) return;
+
+    debounceSaveSavedPlots();
   }, [savedPlots]);
 
   const onClickReset = () => {
