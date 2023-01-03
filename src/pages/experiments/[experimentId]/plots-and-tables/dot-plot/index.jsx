@@ -107,9 +107,38 @@ const DotPlotPage = (props) => {
   const csvFileName = fileNames(experimentName, 'DOT_PLOT', [config?.selectedCellSet, config?.selectedPoints]);
 
   useEffect(() => {
-    if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
     if (cellSets.hierarchy.length === 0) dispatch(loadCellSets(experimentId));
+
+    // load the gene names and dispersions for search table and initial state
+    const state = {
+      sorter: {
+        field: 'gene_names',
+        columnKey: 'gene_names',
+        order: 'ascend',
+      },
+      pagination: {
+        current: 1,
+        pageSize: 1000000,
+      },
+      pageSizeFilter: null,
+    };
+
+    dispatch(loadPaginatedGeneProperties(experimentId, ['dispersions'], geneListUuid, state));
   }, []);
+
+  useEffect(() => {
+    if (!savedPlots) return;
+
+    const selectedPlotUuid = savedPlots.selectedPlots[plotType];
+
+    if (plotUuid === selectedPlotUuid) return;
+
+    setPlotUuid(selectedPlotUuid);
+  }, [savedPlots]);
+
+  useEffect(() => {
+    if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
+  }, [plotUuid]);
 
   const previousComparedConfig = useRef(null);
   const getComparedConfig = (updatedConfig) => _.pick(
@@ -198,23 +227,56 @@ const DotPlotPage = (props) => {
     dispatch(updatePlotData(plotUuid, data));
   };
 
-  useEffect(() => {
-    if (!savedPlots) return;
+  const modifyData = () => {
+    // skip if another saved plot is selected (data already exists)
+    const loadedGenes = [...new Set(plotData?.map((elem) => elem.geneName))];
+    if (_.isEqual(config.selectedGenes, loadedGenes)) return;
 
-    const selectedPlotUuid = savedPlots.selectedPlots[plotType];
+    const currentComparedConfig = getComparedConfig(config);
 
-    if (plotUuid === selectedPlotUuid) return;
+    // skip if config is unchanged, unless a new plot with the same config and no data is selected
+    if (plotData?.length > 0 && _.isEqual(previousComparedConfig.current, currentComparedConfig)) return;
 
-    setPlotUuid(selectedPlotUuid);
-  }, [savedPlots]);
+    // previous compared config is null on first load, use [] for previous selected genes instead
+    const previousSelected = previousComparedConfig.current?.selectedGenes ?? [];
+    const currentSelected = currentComparedConfig.selectedGenes;
 
-  useEffect(() => {
-    if (!shouldFetchPlotData()) return;
+    const previousUseMarker = previousComparedConfig.current?.useMarkerGenes ?? false;
 
-    if (plotData.length > 0) return;
+    // if loading a new saved plot
+    if (plotData.length === 0) {
+      dispatch(getDotPlot(experimentId, plotUuid, config));
+      setReorderAfterFetch(true);
+      return;
+    };
 
-    dispatch(getDotPlot(experimentId, plotUuid, config));
-  }, [plotUuid]);
+    if (_.isEqual(currentSelected, previousSelected)) {
+      // if switching back from marker genes to custom genes, reorder data
+      if (!config.useMarkerGenes && previousUseMarker) {
+        setReorderAfterFetch(true);
+      }
+
+      dispatch(getDotPlot(experimentId, plotUuid, config));
+      return;
+    }
+
+    // if a gene was added
+    if (currentSelected.length > previousSelected.length) {
+      dispatch(getDotPlot(experimentId, plotUuid, config));
+      setReorderAfterFetch(true);
+      return;
+    }
+
+    // if the genes were reordered
+    if (currentSelected.length === previousSelected.length) {
+      reorderData(currentSelected);
+      return;
+    }
+
+    // if genes were removed
+    const removedGenes = previousSelected.filter((gene) => !currentSelected.includes(gene));
+    deleteData(removedGenes);
+  };
 
   useEffect(() => {
     if (!shouldFetchPlotData()) return;
@@ -230,41 +292,10 @@ const DotPlotPage = (props) => {
 
     const currentComparedConfig = getComparedConfig(config);
 
-    if (config && !_.isEqual(previousComparedConfig.current, currentComparedConfig)) {
-      // previous compared config is null on first load, use [] for previous selected genes instead
-      const previousSelected = previousComparedConfig.current?.selectedGenes ?? [];
-      const currentSelected = currentComparedConfig.selectedGenes;
-
-      const previousUseMarker = previousComparedConfig.current?.useMarkerGenes ?? false;
+    if (config) {
+      modifyData(currentComparedConfig, previousComparedConfig);
 
       previousComparedConfig.current = currentComparedConfig;
-      // if the selected genes don't change
-      if (_.isEqual(currentSelected, previousSelected)) {
-        // if switching back from marker genes to custom genes, reorder data
-        if (!config.useMarkerGenes && previousUseMarker) {
-          setReorderAfterFetch(true);
-        }
-
-        dispatch(getDotPlot(experimentId, plotUuid, config));
-        return;
-      }
-
-      // if a gene was added
-      if (currentSelected.length > previousSelected.length) {
-        dispatch(getDotPlot(experimentId, plotUuid, config));
-        setReorderAfterFetch(true);
-        return;
-      }
-
-      // if the genes were reordered
-      if (currentSelected.length === previousSelected.length) {
-        reorderData(currentSelected);
-        return;
-      }
-
-      // if genes were removed
-      const removedGenes = previousSelected.filter((gene) => !currentSelected.includes(gene));
-      deleteData(removedGenes);
     }
   }, [config, cellSets.properties]);
 
@@ -279,24 +310,6 @@ const DotPlotPage = (props) => {
     previousComparedConfig.current.selectedGenes = [];
     dispatch(updatePlotData(plotUuid, []));
   }, [config]);
-
-  // load the gene names and dispersions for search table and initial state
-  useEffect(() => {
-    const state = {
-      sorter: {
-        field: 'gene_names',
-        columnKey: 'gene_names',
-        order: 'ascend',
-      },
-      pagination: {
-        current: 1,
-        pageSize: 100000,
-      },
-      pageSizeFilter: null,
-    };
-
-    dispatch(loadPaginatedGeneProperties(experimentId, ['dispersions'], geneListUuid, state));
-  }, []);
 
   const treeScrollable = document.getElementById('ScrollWrapper');
 
