@@ -32,16 +32,17 @@ import Loader from 'components/Loader';
 import SelectData from 'components/plots/styling/SelectData';
 import populateHeatmapData from 'components/plots/helpers/heatmap/populateHeatmapData';
 import generateVegaData from 'components/plots/helpers/heatmap/vega/generateVegaData';
-import { plotNames } from 'utils/constants';
+import { plotNames, plotTypes, plotUuids } from 'utils/constants';
 
 import ScrollOnDrag from 'components/plots/ScrollOnDrag';
 
 const { Panel } = Collapse;
-const plotUuid = 'markerHeatmapPlotMain';
-const plotType = 'markerHeatmap';
+const plotType = plotTypes.MARKER_HEATMAP;
 const geneListUuid = 'geneList';
 
 const MarkerHeatmap = ({ experimentId }) => {
+  const [plotUuid, setPlotUuid] = useState(plotUuids.MARKER_HEATMAP);
+
   const dispatch = useDispatch();
 
   const [vegaSpec, setVegaSpec] = useState();
@@ -456,6 +457,7 @@ const MarkerHeatmap = ({ experimentId }) => {
       <PlotContainer
         experimentId={experimentId}
         plotUuid={plotUuid}
+        setPlotUuid={setPlotUuid}
         plotType={plotType}
         plotStylingConfig={plotStylingConfig}
         extraControlPanels={renderExtraPanels()}
