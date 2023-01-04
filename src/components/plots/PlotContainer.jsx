@@ -47,7 +47,7 @@ const PlotContainer = (props) => {
   const { config } = useSelector((state) => state.componentConfig[plotUuid] || {});
 
   const savedPlots = useSelector(getSavedPlots());
-  console.log(savedPlots);
+
   const selectedPlotUuid = savedPlots?.selectedPlots?.[plotType];
   const { config: selectedConfig } = useSelector((state) => state.componentConfig[selectedPlotUuid] || {});
 
