@@ -17,7 +17,8 @@ import { CheckCircleTwoTone, CloseCircleTwoTone, DeleteOutlined } from '@ant-des
 import Dropzone from 'react-dropzone';
 
 import config from 'config';
-import techOptions from 'utils/upload/fileUploadSpecifications';
+import { sampleTech } from 'utils/constants';
+import techOptions, { techNamesToDisplay } from 'utils/upload/fileUploadSpecifications';
 import handleError from 'utils/http/handleError';
 import { fileObjectToFileRecord } from 'utils/upload/processUpload';
 import integrationTestConstants from 'utils/integrationTestConstants';
@@ -26,12 +27,30 @@ import endUserMessages from 'utils/endUserMessages';
 const { Text, Title, Paragraph } = Typography;
 const { Option } = Select;
 
+const extraHelpText = {
+  [sampleTech['10X']]: () => <></>,
+  [sampleTech.RHAPSODY]: () => (
+    <Paragraph>
+      <ul>
+        <li>
+          The zip files that are output by the primary processing pipeline contain
+          the .st files that should be uploaded and they must be unzipped first.
+        </li>
+        <li>
+          The folder with Multiplet and Undetermined
+          cells should not be uploaded since it would distort the analysis.
+        </li>
+      </ul>
+    </Paragraph>
+  ),
+};
+
 const FileUploadModal = (props) => {
-  const { onUpload, onCancel } = props;
+  const { onUpload, onCancel, currentSelectedTech } = props;
 
   const guidanceFileLink = 'https://drive.google.com/file/d/1VPaB-yofuExinY2pXyGEEx-w39_OPubO/view';
 
-  const [selectedTech, setSelectedTech] = useState('10X Chromium');
+  const [selectedTech, setSelectedTech] = useState(sampleTech['10X']);
   const [canUpload, setCanUpload] = useState(false);
   const [filesList, setFilesList] = useState([]);
 
@@ -40,9 +59,14 @@ const FileUploadModal = (props) => {
   }, [filesList]);
 
   // Handle on Drop
-  const onDrop = async (acceptedFiles) => {
+  const onDrop = async (droppedFiles) => {
     let filesNotInFolder = false;
-    const filteredFiles = acceptedFiles
+    if (currentSelectedTech && currentSelectedTech !== selectedTech) {
+      handleError('error', endUserMessages.ERROR_SAMPLE_TECHNOLOGY);
+      return;
+    }
+
+    const filteredFiles = droppedFiles
       // Remove all hidden files
       .filter((file) => !file.name.startsWith('.') && !file.name.startsWith('__MACOSX'))
       // Remove all files that aren't in a folder
@@ -52,7 +76,8 @@ const FileUploadModal = (props) => {
         filesNotInFolder ||= !inFolder;
 
         return inFolder;
-      });
+      })
+      .filter((file) => techOptions[selectedTech].fileNameFilter(file.name));
 
     if (filesNotInFolder) {
       handleError('error', endUserMessages.ERROR_FILES_FOLDER);
@@ -100,6 +125,7 @@ const FileUploadModal = (props) => {
             </List.Item>
           )}
         />
+        {extraHelpText[selectedTech]()}
       </Space>
     </>
   );
@@ -135,11 +161,12 @@ const FileUploadModal = (props) => {
                 <span style={{ color: 'red', marginRight: '2em' }}>*</span>
               </Title>
               <Select
+                aria-label='sampleTechnologySelect'
                 defaultValue={selectedTech}
                 onChange={(value) => setSelectedTech(value)}
               >
-                {Object.keys(techOptions).map((val) => (
-                  <Option key={`key-${val}`} value={val}>{val}</Option>
+                {Object.values(sampleTech).map((tech) => (
+                  <Option key={`key-${tech}`} value={tech}>{techNamesToDisplay[tech]}</Option>
                 ))}
               </Select>
             </Space>
@@ -167,7 +194,6 @@ const FileUploadModal = (props) => {
       </Row>
 
       <Row>
-        {/* eslint-disable react/jsx-props-no-spreading */}
         <Col span={24}>
           <Paragraph type='secondary'>
             <i>
@@ -181,6 +207,12 @@ const FileUploadModal = (props) => {
               .
             </i>
           </Paragraph>
+        </Col>
+      </Row>
+
+      <Row>
+        {/* eslint-disable react/jsx-props-no-spreading */}
+        <Col span={24}>
           <Dropzone onDrop={onDrop} multiple>
             {({ getRootProps, getInputProps }) => (
               <div
@@ -195,48 +227,52 @@ const FileUploadModal = (props) => {
             )}
           </Dropzone>
         </Col>
-        {/* eslint-enable react/jsx-props-no-spreading */}
+      </Row>
+      <Row>
+        <Col span={24}>
+          {/* eslint-enable react/jsx-props-no-spreading */}
 
-        {filesList.length ? (
-          <>
-            <Divider orientation='center'>To upload</Divider>
-            <List
-              dataSource={filesList}
-              size='small'
-              itemLayout='horizontal'
-              grid='{column: 4}'
-              renderItem={(file) => (
+          {filesList.length ? (
+            <>
+              <Divider orientation='center'>To upload</Divider>
+              <List
+                dataSource={filesList}
+                size='small'
+                itemLayout='horizontal'
+                grid='{column: 4}'
+                renderItem={(file) => (
 
-                <List.Item
-                  key={file.name}
-                  style={{ width: '100%' }}
-                >
-                  <Space>
-                    {file.valid
-                      ? (
-                        <>
-                          <CheckCircleTwoTone twoToneColor='#52c41a' />
-                        </>
-                      ) : (
-                        <>
-                          <CloseCircleTwoTone twoToneColor='#f5222d' />
-                        </>
-                      )}
-                    <Text
-                      ellipsis={{ tooltip: file.name }}
-                      style={{ width: '200px' }}
-                    >
-                      {file.name}
+                  <List.Item
+                    key={file.name}
+                    style={{ width: '100%' }}
+                  >
+                    <Space>
+                      {file.valid
+                        ? (
+                          <>
+                            <CheckCircleTwoTone twoToneColor='#52c41a' />
+                          </>
+                        ) : (
+                          <>
+                            <CloseCircleTwoTone twoToneColor='#f5222d' />
+                          </>
+                        )}
+                      <Text
+                        ellipsis={{ tooltip: file.name }}
+                        style={{ width: '200px' }}
+                      >
+                        {file.name}
 
-                    </Text>
-                    <DeleteOutlined style={{ color: 'crimson' }} onClick={() => { removeFile(file.name); }} />
-                  </Space>
-                </List.Item>
+                      </Text>
+                      <DeleteOutlined style={{ color: 'crimson' }} onClick={() => { removeFile(file.name); }} />
+                    </Space>
+                  </List.Item>
 
-              )}
-            />
-          </>
-        ) : ''}
+                )}
+              />
+            </>
+          ) : ''}
+        </Col>
       </Row>
     </Modal>
 
@@ -246,11 +282,13 @@ const FileUploadModal = (props) => {
 FileUploadModal.propTypes = {
   onUpload: PropTypes.func,
   onCancel: PropTypes.func,
+  currentSelectedTech: PropTypes.string,
 };
 
 FileUploadModal.defaultProps = {
   onUpload: null,
   onCancel: null,
+  currentSelectedTech: null,
 };
 
 export default FileUploadModal;

@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { act } from 'react-dom/test-utils';
 import { render, screen } from '@testing-library/react';
 import { mount } from 'enzyme';
-import { waitFor, within } from '@testing-library/dom';
+import { fireEvent, waitFor, within } from '@testing-library/dom';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
 
@@ -15,7 +15,6 @@ import mockAPI, {
   generateDefaultMockAPIResponses,
   promiseResponse,
   statusResponse,
-  delayedResponse,
 } from '__test__/test-utils/mockAPI';
 
 import { seekFromS3 } from 'utils/work/seekWorkResponse';
@@ -66,8 +65,8 @@ jest.mock('utils/work/seekWorkResponse', () => ({
 }));
 
 const mockWorkerResponses = {
-  'paginated-gene-expression': () => paginatedGeneExpressionData,
-  'dot-plot-data': () => dotPlotData,
+  'paginated-gene-expression': () => Promise.resolve(_.cloneDeep(paginatedGeneExpressionData)),
+  'dot-plot-data': () => Promise.resolve(_.cloneDeep(dotPlotData)),
 };
 
 const experimentId = fake.EXPERIMENT_ID;
@@ -75,7 +74,7 @@ const plotUuid = 'dotPlotMain';
 
 const customAPIResponses = {
   [`experiments/${experimentId}/cellSets`]: () => promiseResponse(
-    JSON.stringify(cellSetsDataWithScratchpad),
+    JSON.stringify(_.cloneDeep(cellSetsDataWithScratchpad)),
   ),
   [`/plots/${plotUuid}`]: (req) => {
     if (req.method === 'PUT') return promiseResponse(JSON.stringify('OK'));
@@ -136,12 +135,7 @@ describe('Dot plot page', () => {
 
     seekFromS3
       .mockReset()
-      // 1st call to list genes
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]())
-      // 2nd call to paginated gene expression
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]());
+      .mockImplementation((Etag) => mockWorkerResponses[Etag]());
 
     fetchMock.resetMocks();
     fetchMock.mockIf(/.*/, mockAPI(mockAPIResponse));
@@ -178,13 +172,14 @@ describe('Dot plot page', () => {
     expect(screen.getByRole('graphics-document', { name: 'Vega visualization' })).toBeInTheDocument();
 
     // csv data is passed correctly
-    expect(ExportAsCSV.mock.calls).toMatchSnapshot();
+    const loadedData = ExportAsCSV.mock.calls.find(([{ data }]) => data.length > 0);
+    expect(loadedData).toMatchSnapshot();
   });
 
   it('Shows a skeleton if config is not loaded', async () => {
     const noConfigResponse = {
       ...mockAPIResponse,
-      [`/plots/${plotUuid}`]: () => delayedResponse({ body: 'Not found', status: 404 }),
+      [`/plots/${plotUuid}`]: () => new Promise(() => { }),
     };
 
     fetchMock.mockIf(/.*/, mockAPI(noConfigResponse));
@@ -229,15 +224,19 @@ describe('Dot plot page', () => {
   it('Shows an empty message if there is no data to show in the plot', async () => {
     const emptyResponse = {
       ...mockWorkerResponses,
-      'dot-plot-data': () => [],
+      'dot-plot-data': () => Promise.resolve({
+        cellSetsIdx: [],
+        cellSetsNames: [],
+        cellsPercentage: [],
+        avgExpression: [],
+        geneNameIdx: [],
+        geneNames: [],
+      }),
     };
 
     seekFromS3
       .mockReset()
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce((Etag) => emptyResponse[Etag]())
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce((Etag) => emptyResponse[Etag]());
+      .mockImplementation((Etag) => emptyResponse[Etag]());
 
     await renderDotPlot(storeState);
 
@@ -248,25 +247,22 @@ describe('Dot plot page', () => {
   it('Should show a no data error if user is using marker gene and selected filter sets are not represented in more than 1 group in the base cell set', async () => {
     seekFromS3
       .mockReset()
-      // 1st call to list genes
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]())
-      // 2nd call to load dot plot
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]())
-      // 3rd call to load dot plot
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]())
-      // 4th call to load dot plot
-      .mockImplementationOnce(() => null)
-      .mockImplementationOnce((Etag) => mockWorkerResponses[Etag]());
+      .mockImplementation((Etag) => mockWorkerResponses[Etag]());
 
     await renderDotPlot(storeState);
+
+    // Call to list genes
+    await waitFor(() => {
+      expect(seekFromS3).toHaveBeenCalledTimes(2);
+    });
 
     // Use marker genes
     await act(async () => {
       userEvent.click(screen.getByText(/Marker genes/i));
     });
+
+    // Call to load dot plot
+    expect(seekFromS3).toHaveBeenCalledTimes(3);
 
     // Select data
     await act(async () => {
@@ -277,26 +273,29 @@ describe('Dot plot page', () => {
     const selectBaseCells = screen.getByRole('combobox', { name: 'selectCellSets' });
 
     await act(async () => {
-      userEvent.click(selectBaseCells);
+      await userEvent.click(selectBaseCells);
     });
 
     const baseOption = screen.getByTitle(/Samples/);
 
     await act(async () => {
-      userEvent.click(baseOption, undefined, { skipPointerEventsCheck: true });
+      fireEvent.click(baseOption);
     });
+
+    // Call to load dot plot
+    expect(seekFromS3).toHaveBeenCalledTimes(4);
 
     // Select the filter sets
     const selectFilterCells = screen.getByRole('combobox', { name: 'selectPoints' });
 
     await act(async () => {
-      userEvent.click(selectFilterCells);
+      await userEvent.click(selectFilterCells);
     });
 
     const filterOption = screen.getByTitle(/Copied WT2/);
 
     await act(async () => {
-      userEvent.click(filterOption, undefined, { skipPointerEventsCheck: true });
+      fireEvent.click(filterOption);
     });
 
     await waitFor(() => {
@@ -305,6 +304,12 @@ describe('Dot plot page', () => {
       expect(screen.getByText(/A comparison can not be run to determine the top marker genes/i)).toBeInTheDocument();
       expect(screen.getByText(/Select another option from the 'Select data' menu/i)).toBeInTheDocument();
     });
+
+    // No new calls to load dot plot
+    expect(seekFromS3).toHaveBeenCalledTimes(4);
+
+    // Calls are correct
+    expect(seekFromS3.mock.calls).toMatchSnapshot();
   });
 
   it('removing a gene keeps the order', async () => {
@@ -313,11 +318,10 @@ describe('Dot plot page', () => {
     const geneTree = screen.getByRole('tree');
 
     // first three genes of the data should be loaded by default
-    const loadedGenes = paginatedGeneExpressionData.rows.map((row) => (row.gene_names)).slice(0, 3);
-
+    const loadedGenes = {};
     // The genes in Data 5 should be in the tree
-    loadedGenes.forEach((geneName) => {
-      expect(within(geneTree).getByText(geneName)).toBeInTheDocument();
+    paginatedGeneExpressionData.gene_names.forEach((gene, indx) => {
+      loadedGenes[gene] = { dispersions: paginatedGeneExpressionData.dispersions[indx] };
     });
 
     // Remove a gene using the X button
@@ -443,7 +447,7 @@ describe('Dot plot page', () => {
 describe('Drag and drop enzyme tests', () => {
   let component;
   let tree;
-  let loadedGenes;
+  const loadedGenes = {};
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -480,15 +484,16 @@ describe('Drag and drop enzyme tests', () => {
 
     // antd renders 5 elements, use the first one
     tree = component.find({ 'data-testid': 'HierachicalTreeGenes' }).at(0);
-    loadedGenes = paginatedGeneExpressionData.rows
-      .map((row) => (row.gene_names))
-      .slice(0, 3)
-      .reverse();
+
+    paginatedGeneExpressionData.gene_names.slice(0, 3).reverse().forEach((gene, indx) => {
+      loadedGenes[gene] = { dispersions: paginatedGeneExpressionData.dispersions[indx] };
+    });
   });
 
   it('changes nothing on drop in place', async () => {
     // default genes are in the tree
-    loadedGenes.forEach((geneName) => {
+
+    Object.keys(loadedGenes).forEach((geneName) => {
       expect(tree.containsMatchingElement(geneName));
     });
 
@@ -506,13 +511,12 @@ describe('Drag and drop enzyme tests', () => {
     });
 
     const newOrder = getCurrentGeneOrder(component);
-
-    expect(_.isEqual(newOrder, loadedGenes)).toEqual(true);
+    expect(_.isEqual(newOrder, Object.keys(loadedGenes))).toEqual(true);
   });
 
   it('re-orders genes correctly', async () => {
     // default genes are in the tree
-    loadedGenes.forEach((geneName) => {
+    Object.keys(loadedGenes).forEach((geneName) => {
       expect(tree.containsMatchingElement(geneName));
     });
     // dropping to gap re-orders genes
@@ -529,9 +533,7 @@ describe('Drag and drop enzyme tests', () => {
     });
 
     const newOrder = getCurrentGeneOrder(component);
-
-    const expectedOrder = arrayMoveImmutable(loadedGenes, 0, 1);
-
+    const expectedOrder = arrayMoveImmutable(Object.keys(loadedGenes), 0, 1);
     expect(_.isEqual(newOrder, expectedOrder)).toEqual(true);
   });
 });

@@ -22,9 +22,8 @@ const generateSpec = (config, groupName, data, displayLabels = true) => {
       title: ['Intensity'],
       labelFont: config.fontStyle.font,
       titleFont: config.fontStyle.font,
-      gradientLength: {
-        signal: 'width',
-      },
+      gradientLength: { signal: 'width' },
+      labelSeparation: { signal: 'width' },
     },
     {
       fill: 'cellSetColors',
@@ -45,6 +44,7 @@ const generateSpec = (config, groupName, data, displayLabels = true) => {
       columns: verticalLegendColumns,
       labelFont: config.fontStyle.font,
       titleFont: config.fontStyle.font,
+      symbolLimit: 0,
     },
   ];
 
@@ -57,9 +57,8 @@ const generateSpec = (config, groupName, data, displayLabels = true) => {
         orient: 'left',
         labelFont: config.fontStyle.font,
         titleFont: config.fontStyle.font,
-        gradientLength: {
-          signal: 'height / 3',
-        },
+        gradientLength: { signal: 'height / 3' },
+        labelSeparation: { signal: 'height / 3' },
       },
       {
         fill: 'cellSetColors',
@@ -162,11 +161,12 @@ const generateSpec = (config, groupName, data, displayLabels = true) => {
       },
       {
         name: 'color',
-        type: 'linear',
+        type: 'quantize',
         range: {
           scheme: config.colour.gradient === 'default'
             ? 'purplered'
             : config.colour.gradient,
+          count: 100,
         },
         domain: {
           data: 'geneExpressionsData',

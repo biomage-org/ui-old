@@ -3,8 +3,9 @@ import React from 'react';
 import {
   render, screen, fireEvent, waitFor,
 } from '@testing-library/react';
-
+import { within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
+
 import { act } from 'react-dom/test-utils';
 
 import { Provider } from 'react-redux';
@@ -18,6 +19,7 @@ import { createCellSet } from 'redux/actions/cellSets';
 
 import '__test__/test-utils/setupTests';
 import { withoutFilteredOutCells } from 'utils/cellSetOperations';
+import { createHierarchyFromTree, createPropertiesFromTree } from 'redux/reducers/cellSets/helpers';
 
 jest.mock('utils/work/fetchWork');
 
@@ -144,6 +146,11 @@ describe('CellSetsTool', () => {
 
     // There should be three operations rendered.
     expect(cellSetOperations.length).toEqual(3);
+
+    // Uncomment test to test for the existence of the cell sets test
+    // There should be a button for subsetting cellsets
+    // const subsetCellSetsOperation = screen.getByLabelText(/Create new experiment from selected cellsets/i);
+    // expect(subsetCellSetsOperation).toBeInTheDocument();
   });
 
   it('can compute a union of 2 cell sets', async () => {
@@ -451,7 +458,12 @@ describe('CellSetsTool', () => {
     const cellsWT2 = sampleList.find(({ name }) => name === 'WT2').cellIds;
     const selectedCellIds = [...cellsWT1, ...cellsWT2];
 
-    const numSelectedCells = withoutFilteredOutCells(cellSetsData.cellSets, selectedCellIds).size;
+    const cellSets = {
+      properties: createPropertiesFromTree(cellSetsData.cellSets),
+      hierarchy: createHierarchyFromTree(cellSetsData.cellSets),
+    };
+
+    const numSelectedCells = withoutFilteredOutCells(cellSets, selectedCellIds).size;
 
     screen.getByText(`${numSelectedCells} cells selected`);
   });
@@ -585,4 +597,46 @@ describe('CellSetsTool', () => {
     expect(screen.queryByText(/2 cell sets are currently hidden./)).toBeNull();
     expect(screen.queryByText('Unhide')).toBeNull();
   });
+
+  // it('Runs subset experiment correctly', async () => {
+  //   await act(async () => {
+  //     render(
+  //       <Provider store={storeState}>
+  //         {cellSetsToolFactory()}
+  //       </Provider>,
+  //     );
+  //   });
+
+  //   // select the third louvain cluster
+  //   const louvain3Cluster = screen.getByText('Cluster 3');
+  //   userEvent.click(louvain3Cluster);
+
+  //   // select the fourth louvain cluster
+  //   const louvain4Cluster = screen.getByText('Cluster 4');
+  //   userEvent.click(louvain4Cluster);
+
+  //   const subsetOperation = screen.getByLabelText('Create new experiment from selected cellsets');
+  //   userEvent.click(subsetOperation);
+
+  //   const createModal = screen.getByTestId('subsetCellSetsModal');
+  //   const createButton = within(createModal).getByRole('button', { name: /Create/i });
+
+  //   await act(async () => {
+  //     fireEvent(
+  //       createButton,
+  //       new MouseEvent('click', {
+  //         bubbles: true,
+  //         cancelable: true,
+  //       }),
+  //     );
+  //   });
+
+  //   expect(fetchMock).toHaveBeenCalledWith(
+  //     expect.stringContaining(`/v2/experiments/${experimentId}/subset`),
+  //     expect.objectContaining({
+  //       body: expect.stringContaining('"cellSetKeys":["louvain-3","louvain-4"]'),
+  //       method: 'POST',
+  //     }),
+  //   );
+  // });
 });

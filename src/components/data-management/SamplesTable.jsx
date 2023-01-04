@@ -45,9 +45,12 @@ const SamplesTable = forwardRef((props, ref) => {
 
   const experiments = useSelector((state) => state.experiments);
   const samples = useSelector((state) => state.samples);
-  const areSamplesLoading = useSelector((state) => state.samples.meta.loading);
-
+  const samplesLoading = useSelector((state) => state.samples.meta.loading);
   const activeExperimentId = useSelector((state) => state.experiments.meta.activeExperimentId);
+
+  const samplesValidating = useSelector(
+    (state) => state.samples.meta.validating.includes(activeExperimentId),
+  );
   const activeExperiment = useSelector((state) => state.experiments[activeExperimentId]);
   const selectedTech = samples[activeExperiment?.sampleIds[0]]?.type;
   const [sampleNames, setSampleNames] = useState(new Set());
@@ -71,12 +74,12 @@ const SamplesTable = forwardRef((props, ref) => {
       fixed: true,
       render: (text, record, indx) => <SampleNameCell cellInfo={{ text, record, indx }} />,
     },
-    ...fileUploadSpecifications[selectedTech]?.displayedFiles?.map((fileName, indx) => {
-      const fileNameWithoutExtension = fileName.split('.')[0];
+    ...fileUploadSpecifications[selectedTech]?.requiredFiles?.map((fileName, indx) => {
+      const fileNameWithoutExtension = fileName.key.split('.')[0];
 
       return ({
         index: 2 + indx,
-        title: fileName,
+        title: fileName.displayedName,
         key: fileNameWithoutExtension,
         dataIndex: fileNameWithoutExtension,
         render: (tableCellData) => (
@@ -116,7 +119,7 @@ const SamplesTable = forwardRef((props, ref) => {
 
   useConditionalEffect(() => {
     dispatch(loadSamples(activeExperimentId));
-  }, [activeExperiment?.sampleIds], { lazy: true });
+  }, [activeExperimentId], { lazy: true });
 
   const deleteMetadataColumn = (name) => {
     dispatch(deleteMetadataTrack(name, activeExperimentId));
@@ -159,6 +162,7 @@ const SamplesTable = forwardRef((props, ref) => {
 
     createMetadataColumn() {
       const key = temporaryMetadataKey(tableColumns);
+      const previousTableColumns = tableColumns;
       const metadataCreateColumn = {
         key,
         fixed: 'right',
@@ -169,7 +173,7 @@ const SamplesTable = forwardRef((props, ref) => {
               onMetadataCreate(name);
             }}
             onCancel={() => {
-              deleteMetadataColumn(key);
+              setTableColumns(previousTableColumns);
             }}
             message='Provide new metadata track name'
             visible
@@ -215,7 +219,7 @@ const SamplesTable = forwardRef((props, ref) => {
   };
 
   useEffect(() => {
-    if (activeExperiment.sampleIds.length === 0) {
+    if (!activeExperiment?.sampleIds.length) {
       setTableData([]);
       return;
     }
@@ -225,23 +229,25 @@ const SamplesTable = forwardRef((props, ref) => {
       // in this situation it's possible that the sampleUuid does not exist
       // this a temporary fix so that the whole UI doesn't crash preventing the
       // user from removing the dataset or uploading another one.
-      const sampleFiles = samples[sampleUuid]?.files || {};
 
-      const barcodesFile = sampleFiles['barcodes.tsv.gz'] ?? { upload: { status: UploadStatus.FILE_NOT_FOUND } };
-      const genesFile = sampleFiles['features.tsv.gz'] ?? { upload: { status: UploadStatus.FILE_NOT_FOUND } };
-      const matrixFile = sampleFiles['matrix.mtx.gz'] ?? { upload: { status: UploadStatus.FILE_NOT_FOUND } };
+      if (!samples[sampleUuid]) return {};
 
-      const barcodesData = { sampleUuid, file: barcodesFile };
-      const genesData = { sampleUuid, file: genesFile };
-      const matrixData = { sampleUuid, file: matrixFile };
+      const { files: sampleFiles, fileNames: sampleFileNames } = samples[sampleUuid];
+
+      const fileData = {};
+      sampleFileNames.forEach((key) => {
+        const displayedFileInTable = key.split('.')[0];
+
+        const currentFile = sampleFiles[key] ?? { upload: { status: UploadStatus.FILE_NOT_FOUND } };
+        const currentFileData = { sampleUuid, file: currentFile };
+        fileData[displayedFileInTable] = currentFileData;
+      });
 
       return {
         key: idx,
         name: samples[sampleUuid]?.name || 'UPLOAD ERROR: Please reupload sample',
         uuid: sampleUuid,
-        barcodes: barcodesData,
-        genes: genesData,
-        matrix: matrixData,
+        ...fileData,
         ...samples[sampleUuid]?.metadata,
       };
     });
@@ -300,7 +306,11 @@ const SamplesTable = forwardRef((props, ref) => {
 
       <Row justify='center'>
         <Text>
-          We&apos;re getting your samples ...
+          {
+            samplesLoading ? 'We\'re getting your samples ...'
+              : samplesValidating ? 'We\'re validating your samples ...'
+                : ''
+          }
         </Text>
       </Row>
     </>
@@ -334,7 +344,7 @@ const SamplesTable = forwardRef((props, ref) => {
 
   return (
     <>
-      {areSamplesLoading ? renderLoader() : renderSamplesTable()}
+      {samplesLoading || samplesValidating ? renderLoader() : renderSamplesTable()}
     </>
   );
 });

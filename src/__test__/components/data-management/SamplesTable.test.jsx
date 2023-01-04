@@ -45,7 +45,7 @@ jest.mock('@aws-amplify/storage', () => ({
   ])),
 }));
 
-jest.mock('utils/data-management/downloadFromUrl');
+jest.mock('utils/downloadFromUrl');
 
 jest.mock('react-sortable-hoc', () => ({
   sortableContainer: jest.fn(jest.requireActual('react-sortable-hoc').sortableContainer),
@@ -144,6 +144,42 @@ describe('Samples table', () => {
     Object.values(samples).forEach((sample) => {
       expect(screen.queryByText(sample.name)).not.toBeInTheDocument();
     });
+  });
+
+  it('Should NOT show the samples until theres validation going on for active experiment', async () => {
+    const validatingExpState = _.cloneDeep(storeState.getState());
+    const createMockStore = configureMockStore([thunk]);
+
+    // Set the active experiment as being validated
+    validatingExpState.samples.meta.validating = [experimentWithSamplesId];
+
+    const validatingExpStore = createMockStore(validatingExpState);
+
+    await renderSamplesTable(validatingExpStore);
+
+    Object.values(samples).forEach((sample) => {
+      expect(screen.queryByText(sample.name)).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByText('We\'re validating your samples ...')).toBeDefined();
+  });
+
+  it('Should show the samples if theres validation going on but not for active experiment', async () => {
+    const validatingExpState = _.cloneDeep(storeState.getState());
+    const createMockStore = configureMockStore([thunk]);
+
+    // Set the active experiment as being validated
+    validatingExpState.samples.meta.validating = ['inactiveExperiment'];
+
+    const validatingExpStore = createMockStore(validatingExpState);
+
+    await renderSamplesTable(validatingExpStore);
+
+    Object.values(samples).forEach((sample) => {
+      expect(screen.getByText(sample.name)).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('We\'re validating your samples ...')).not.toBeInTheDocument();
   });
 
   it('Renaming the sample renames the sample', async () => {

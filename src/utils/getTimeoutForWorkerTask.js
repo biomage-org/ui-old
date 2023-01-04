@@ -28,15 +28,18 @@ const getTimeoutForWorkerTaskUncapped = (state, taskName, options) => {
     case 'TrajectoryAnalysisStartingNodes': {
       // Number of clusters is inversely proportional to running time
       // Larger custers produce more possible trajectories
-      return ((0.1 * nCells) / nClusters) + 60;
+      return ((0.3 * nCells) / nClusters) + 60;
     }
     case 'TrajectoryAnalysisPseudotime': {
-      return ((0.2 * nCells) / nClusters) + 60;
+      return ((0.6 * nCells) / nClusters) + 60;
     }
     case 'ListGenes':
     case 'GeneExpression':
     case 'GetMitochondrialContent':
     case 'GetDoubletScore':
+    case 'GetNormalizedExpression':
+    case 'GetNUmis':
+    case 'GetNGenes':
     case 'PlotData': {
       return 60;
     }

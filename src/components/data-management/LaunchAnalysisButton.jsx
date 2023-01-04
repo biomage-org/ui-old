@@ -83,7 +83,7 @@ const LaunchAnalysisButton = () => {
       const { fileNames } = sample;
       if (
         !fileUploadSpecifications[sample.type].requiredFiles.every(
-          (file) => fileNames.includes(file),
+          (file) => fileNames.includes(file.key),
         )
       ) { return false; }
 
@@ -114,6 +114,7 @@ const LaunchAnalysisButton = () => {
       if (!samples[sampleUuid]) return false;
 
       const checkedSample = samples[sampleUuid];
+
       return allSampleFilesUploaded(checkedSample)
         && allSampleMetadataInserted(checkedSample);
     });

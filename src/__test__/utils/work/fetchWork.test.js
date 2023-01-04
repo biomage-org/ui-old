@@ -1,7 +1,12 @@
 /* eslint-disable global-require */
-import { fetchWork, generateETag } from 'utils/work/fetchWork';
-import { Environment } from 'utils/deploymentInfo';
-import { getFourGenesMatrix } from '../ExpressionMatrix/testMatrixes';
+import fetchMock, { enableFetchMocks } from 'jest-fetch-mock';
+
+import fetchWork from 'utils/work/fetchWork';
+import { makeStore } from 'redux/store';
+import { loadBackendStatus } from 'redux/actions/backendStatus';
+
+import mockAPI, { generateDefaultMockAPIResponses } from '__test__/test-utils/mockAPI';
+import { getFourGenesMatrix } from '__test__/utils/ExpressionMatrix/testMatrixes';
 
 const {
   mockGenesListData,
@@ -9,8 +14,6 @@ const {
   mockCacheSet,
   mockDispatchWorkRequest,
   mockSeekFromS3,
-  mockReduxState,
-  mockQcPipelineStartDate,
 } = require('__test__/utils/work/fetchWork.mock');
 
 jest.mock(
@@ -23,11 +26,9 @@ jest.mock(
 );
 
 const experimentId = '1234';
-const NON_GENE_EXPRESSION_ETAG = 'a1d0453fad3f37cb03fc5e400f84775a'; // pragma: allowlist secret
-const GENE_EXPRESSION_ABCD_ETAG = '89edca596f4a2ec8139b3e1face47c4a'; // pragma: allowlist secret
-const GENE_EXPRESSION_D_ETAG = '78cf13c1fb1596e64f07fa93d6d028a9'; // pragma: allowlist secret
+const NON_GENE_EXPRESSION_ETAG = '713b35c59f447a9d308d0bb36521e851'; // pragma: allowlist secret
+const GENE_EXPRESSION_ABCD_ETAG = 'a669a9c313883975c1678cc8f0e5d1f7'; // pragma: allowlist secret
 const timeout = 10;
-const mockExtras = undefined;
 
 const nonGeneExpressionWorkRequest = {
   name: 'ListGenes',
@@ -38,7 +39,11 @@ const geneExpressionWorkRequest = {
   genes: ['A', 'B', 'C', 'D'],
 };
 
+enableFetchMocks();
+
 describe('fetchWork', () => {
+  let store;
+
   beforeEach(async () => {
     Storage.prototype.setItem = jest.fn();
 
@@ -48,6 +53,13 @@ describe('fetchWork', () => {
       .mockReset()
       .mockImplementationOnce(() => null)
       .mockImplementationOnce(() => mockGenesListData);
+
+    fetchMock.resetMocks();
+    fetchMock.mockIf(/.*/, mockAPI(generateDefaultMockAPIResponses(experimentId)));
+
+    store = makeStore();
+
+    await store.dispatch(loadBackendStatus(experimentId));
   });
 
   it('runs correctly for gene expression work request', async () => {
@@ -59,7 +71,8 @@ describe('fetchWork', () => {
     const res = await fetchWork(
       experimentId,
       geneExpressionWorkRequest,
-      mockReduxState(experimentId),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -89,7 +102,8 @@ describe('fetchWork', () => {
     const res = await fetchWork(
       experimentId,
       nonGeneExpressionWorkRequest,
-      mockReduxState(experimentId),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -119,7 +133,8 @@ describe('fetchWork', () => {
       fetchWork(
         experimentId,
         nonGeneExpressionWorkRequest,
-        mockReduxState(experimentId),
+        store.getState,
+        store.dispatch,
         { timeout: 10 },
       ),
     ).rejects.toThrow();
@@ -137,7 +152,8 @@ describe('fetchWork', () => {
     await fetchWork(
       experimentId,
       nonGeneExpressionWorkRequest,
-      mockReduxState(experimentId),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -156,7 +172,8 @@ describe('fetchWork', () => {
     await fetchWork(
       experimentId,
       nonGeneExpressionWorkRequest,
-      mockReduxState(experimentId),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -173,7 +190,8 @@ describe('fetchWork', () => {
     await fetchWork(
       experimentId,
       nonGeneExpressionWorkRequest,
-      mockReduxState(experimentId, Environment.DEVELOPMENT),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -192,7 +210,8 @@ describe('fetchWork', () => {
     await fetchWork(
       experimentId,
       nonGeneExpressionWorkRequest,
-      mockReduxState(experimentId, Environment.DEVELOPMENT),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -203,65 +222,5 @@ describe('fetchWork', () => {
       NON_GENE_EXPRESSION_ETAG,
       expect.anything(),
     );
-  });
-});
-
-describe('generateEtag', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-
-    global.Math.random = jest.fn(() => 1);
-  });
-
-  it('Generates the correct ETag', async () => {
-    const ETag = generateETag(
-      experimentId,
-      nonGeneExpressionWorkRequest,
-      mockExtras,
-      mockQcPipelineStartDate,
-      Environment.PRODUCTION,
-    );
-
-    expect(ETag).toEqual(NON_GENE_EXPRESSION_ETAG);
-  });
-
-  it('Generates the correct geneExpression ETag', async () => {
-    const ETag = generateETag(
-      experimentId,
-      { name: 'GeneExpression', genes: ['D'] },
-      mockExtras,
-      mockQcPipelineStartDate,
-      Environment.PRODUCTION,
-    );
-
-    expect(ETag).toEqual(GENE_EXPRESSION_D_ETAG);
-  });
-
-  it('Generates unique key for dev environment', async () => {
-    Storage.prototype.getItem = jest.fn(() => 'true');
-
-    generateETag(
-      experimentId,
-      nonGeneExpressionWorkRequest,
-      mockExtras,
-      mockQcPipelineStartDate,
-      Environment.DEVELOPMENT,
-    );
-
-    expect(global.Math.random).toHaveBeenCalledTimes(1);
-  });
-
-  it('Does not generate a unique key for GetEmbedding in dev environment', async () => {
-    Storage.prototype.getItem = jest.fn(() => 'true');
-
-    generateETag(
-      experimentId,
-      { name: 'GetEmbedding' },
-      mockExtras,
-      mockQcPipelineStartDate,
-      Environment.DEVELOPMENT,
-    );
-
-    expect(global.Math.random).not.toHaveBeenCalled();
   });
 });

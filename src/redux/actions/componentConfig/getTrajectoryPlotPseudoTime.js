@@ -1,10 +1,11 @@
-import getTimeoutForWorkerTask from 'utils/getTimeoutForWorkerTask';
+import { getBackendStatus } from 'redux/selectors';
 import { PLOT_DATA_LOADED, PLOT_DATA_LOADING, PLOT_DATA_ERROR } from 'redux/actionTypes/componentConfig';
 
 import handleError from 'utils/http/handleError';
 import endUserMessages from 'utils/endUserMessages';
-import { fetchWork, generateETag } from 'utils/work/fetchWork';
-import { getBackendStatus } from 'redux/selectors';
+import fetchWork from 'utils/work/fetchWork';
+import generateETag from 'utils/work/generateETag';
+import getTimeoutForWorkerTask from 'utils/getTimeoutForWorkerTask';
 
 const getTrajectoryPlotPseudoTime = (
   rootNodes,
@@ -32,12 +33,15 @@ const getTrajectoryPlotPseudoTime = (
     config: methodSettings[embeddingMethod],
   };
 
-  const embeddingETag = generateETag(
+  const embeddingETag = await generateETag(
     experimentId,
     embeddingBody,
     undefined,
     qcPipelineStartDate,
     environment,
+    clusteringSettings,
+    dispatch,
+    getState,
   );
 
   const timeout = getTimeoutForWorkerTask(getState(), 'TrajectoryAnalysisPseudotime');
@@ -63,7 +67,7 @@ const getTrajectoryPlotPseudoTime = (
     });
 
     const data = await fetchWork(
-      experimentId, body, getState, { timeout, rerun: true },
+      experimentId, body, getState, dispatch, { timeout, rerun: true },
     );
 
     const { plotData } = getState().componentConfig[plotUuid];

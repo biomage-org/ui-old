@@ -5,7 +5,7 @@ import {
   GENES_EXPRESSION_LOADING, GENES_EXPRESSION_ERROR, GENES_EXPRESSION_LOADED,
 } from 'redux/actionTypes/genes';
 
-import { fetchWork } from 'utils/work/fetchWork';
+import fetchWork from 'utils/work/fetchWork';
 import getTimeoutForWorkerTask from 'utils/getTimeoutForWorkerTask';
 
 const loadGeneExpression = (
@@ -73,7 +73,7 @@ const loadGeneExpression = (
       zScore: zScoreJson,
       stats,
     } = await fetchWork(
-      experimentId, body, getState, { timeout },
+      experimentId, body, getState, dispatch, { timeout },
     );
 
     const rawExpression = SparseMatrix.fromJSON(rawExpressionJson);
