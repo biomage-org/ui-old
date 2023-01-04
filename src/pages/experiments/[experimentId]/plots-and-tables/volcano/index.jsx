@@ -27,16 +27,17 @@ import Loader from 'components/Loader';
 
 import { generateSpec } from 'utils/plotSpecs/generateVolcanoSpec';
 import calculateVolcanoDataPoints from 'components/plots/helpers/calculateVolcanoDataPoints';
-import { plotNames } from 'utils/constants';
+import { plotNames, plotTypes, plotUuids } from 'utils/constants';
 import 'vega-webgl-renderer';
 
 const { Panel } = Collapse;
 
-const plotUuid = 'volcanoPlotMain';
-const plotType = 'volcano';
+const plotType = plotTypes.VOLCANO_PLOT;
 
 const VolcanoPlotPage = (props) => {
   const { experimentId } = props;
+
+  const [plotUuid, setPlotUuid] = useState(plotUuids.VOLCANO_PLOT);
 
   const dispatch = useDispatch();
   const comparisonCreated = useRef(false);
@@ -228,6 +229,7 @@ const VolcanoPlotPage = (props) => {
       <PlotContainer
         experimentId={experimentId}
         plotUuid={plotUuid}
+        setPlotUuid={setPlotUuid}
         plotType={plotType}
         plotStylingConfig={plotStylingConfig}
         extraToolbarControls={generateExportDropdown()}
