@@ -123,9 +123,16 @@ const PlotContainer = (props) => {
   };
 
   const onClickDelete = () => {
-    const newPlots = _.without(savedPlots[plotType], plotUuid);
+    const { plots, descriptions } = savedPlots[plotType];
+    const indexToRemove = plots.indexOf(plotUuid);
+
+    const newPlots = [...plots];
+    const newDescriptions = [...descriptions];
+    newPlots.splice(indexToRemove, 1);
+    newDescriptions.splice(indexToRemove, 1);
+
     setPlotUuid(newPlots[0]);
-    dispatch(updatePlotConfig('savedPlots', { [plotType]: { plots: newPlots } }));
+    dispatch(updatePlotConfig('savedPlots', { [plotType]: { plots: newPlots, descriptions: newDescriptions } }));
   };
 
   if (!config) {

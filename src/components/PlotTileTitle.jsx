@@ -11,16 +11,16 @@ const PlotTileTitle = ({ plotType, plotUuid, setPlotUuid }) => {
   useEffect(() => {
     if (!savedPlots) return;
 
-    const savedPlotsList = savedPlots[plotType].plots.slice(1);
+    const savedPlotsList = savedPlots[plotType].plots;
     if (plotOptions.map((option) => option.value) !== savedPlotsList) {
-      const newPlotOptions = savedPlotsList.map((uuid) => ({ label: uuid, value: uuid }));
+      const newPlotOptions = savedPlotsList.map((uuid, index) => ({ label: index === 0 ? 'Exploration Plot' : uuid, value: uuid }));
       setPlotOptions(newPlotOptions);
     }
   }, [savedPlots]);
 
   return (
     <Select
-      options={[{ label: 'Exploration Plot', value: plotUuid }, ...plotOptions]}
+      options={plotOptions}
       value={plotUuid}
       onSelect={(value) => setPlotUuid(value)}
     />
