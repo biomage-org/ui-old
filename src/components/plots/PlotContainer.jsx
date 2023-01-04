@@ -47,7 +47,8 @@ const PlotContainer = (props) => {
   const { config } = useSelector((state) => state.componentConfig[plotUuid] || {});
 
   const savedPlots = useSelector(getSavedPlots());
-  const selectedPlotUuid = savedPlots?.selectedPlots[plotType];
+  console.log(savedPlots);
+  const selectedPlotUuid = savedPlots?.selectedPlots?.[plotType];
   const { config: selectedConfig } = useSelector((state) => state.componentConfig[selectedPlotUuid] || {});
 
   const debounceSave = useCallback(

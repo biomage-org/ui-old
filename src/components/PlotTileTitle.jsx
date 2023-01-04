@@ -23,6 +23,7 @@ const PlotTileTitle = ({ plotType, plotUuid, setPlotUuid }) => {
       options={plotOptions}
       value={plotUuid}
       onSelect={(value) => setPlotUuid(value)}
+      dropdownMatchSelectWidth={false}
     />
   );
 };

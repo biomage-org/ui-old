@@ -28,12 +28,17 @@ const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
   const [plotNames, setPlotNames] = useState(new Set());
   const [plotName, setPlotName] = useState('');
   const [plotDescription, setPlotDescription] = useState('');
-  const [isValidName, setIsValidName] = useState(false);
+  const [validateName, setValidateName] = useState({});
+  const [validateDesc, setValidateDesc] = useState({});
 
-  const validationChecks = [
+  const validationChecksName = [
     rules.MIN_1_CHAR,
     rules.ALPHANUM_DASH_SPACE,
     rules.UNIQUE_NAME_CASE_INSENSITIVE,
+  ];
+
+  const validationChecksDesc = [
+    rules.ALPHANUM_DASH_SPACE,
   ];
 
   const validationParams = {
@@ -45,8 +50,12 @@ const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
   }, [savedPlots]);
 
   useEffect(() => {
-    setIsValidName(validateInputs(plotName, validationChecks, validationParams).isValid);
+    setValidateName(validateInputs(plotName, validationChecksName, validationParams));
   }, [plotName]);
+
+  useEffect(() => {
+    setValidateDesc(validateInputs(plotDescription, validationChecksDesc, {}));
+  }, [plotDescription]);
 
   const submit = () => {
     dispatch(updatePlotConfig(
@@ -75,7 +84,7 @@ const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
           type='primary'
           key='save'
           block
-          disabled={!isValidName}
+          disabled={!validateName.isValid || !validateDesc.isValid}
           onClick={() => {
             submit();
           }}
@@ -87,34 +96,32 @@ const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
       <Space>
         <Form layout='vertical'>
           <Form.Item
-            validateStatus={isValidName ? 'success' : 'error'}
-            help={(
-              <ul>
-                {validateInputs(
-                  plotName,
-                  validationChecks,
-                  validationParams,
-                ).results
-                  .filter((msg) => msg !== true)
-                  .map((msg) => <li>{msg}</li>)}
-              </ul>
-            )}
+            validateStatus={validateName.isValid ? 'success' : 'error'}
+            help={
+              validateName.results
+                ? (
+                  <ul>
+                    {validateName.results
+                      .filter((msg) => msg !== true)
+                      .map((msg) => <li>{msg}</li>)}
+                  </ul>
+                )
+                : ''
+            }
             label={(
               <span>
                 Plot name
-                {' '}
-                <Text type='secondary'>(You can change this later)</Text>
               </span>
             )}
             required
-            name='requiredMark'
+            name='plotName'
           >
             <Input
               onChange={(e) => {
                 setPlotName(e.target.value.trim());
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && isValidName) {
+                if (e.key === 'Enter' && validateName.isValid) {
                   submit();
                 }
               }}
@@ -123,11 +130,26 @@ const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
             />
           </Form.Item>
           <Form.Item
+            validateStatus={validateDesc.isValid ? 'success' : 'error'}
+            help={
+              validateDesc.results
+                ? (
+                  <ul>
+                    {validateDesc.results
+                      .filter((msg) => msg !== true)
+                      .map((msg) => <li>{msg}</li>)}
+                  </ul>
+                )
+                : ''
+            }
             label='Plot description'
+            required
+            requiredMark='optional'
           >
             <TextArea
               onChange={(e) => { setPlotDescription(e.target.value); }}
               placeholder='Type description'
+              value={plotDescription}
               autoSize={{ minRows: 3, maxRows: 5 }}
             />
           </Form.Item>
