@@ -18,7 +18,7 @@ import PlatformError from 'components/PlatformError';
 import Loader from 'components/Loader';
 import populateHeatmapData from 'components/plots/helpers/heatmap/populateHeatmapData';
 import { getCellSets } from 'redux/selectors';
-import { plotNames } from 'utils/constants';
+import { plotNames, plotTypes, plotUuids } from 'utils/constants';
 import SelectData from 'components/plots/styling/SelectData';
 import HeatmapGroupBySettings from 'components/data-exploration/heatmap/HeatmapGroupBySettings';
 import HeatmapMetadataTrackSettings from 'components/data-exploration/heatmap/HeatmapMetadataTrackSettings';
@@ -27,10 +27,11 @@ import generateVegaData from 'components/plots/helpers/heatmap/vega/generateVega
 
 const { Panel } = Collapse;
 
-const plotUuid = 'heatmapPlotMain';
-const plotType = 'heatmap';
+const plotType = plotTypes.HEATMAP;
 
 const HeatmapPlot = ({ experimentId }) => {
+  const [plotUuid, setPlotUuid] = useState(plotUuids.HEATMAP);
+
   const dispatch = useDispatch();
   const config = useSelector((state) => state.componentConfig[plotUuid]?.config);
   const { expression: expressionData } = useSelector((state) => state.genes);
@@ -239,6 +240,7 @@ const HeatmapPlot = ({ experimentId }) => {
       <PlotContainer
         experimentId={experimentId}
         plotUuid={plotUuid}
+        setPlotUuid={setPlotUuid}
         plotType={plotType}
         plotStylingConfig={plotStylingConfig}
         extraControlPanels={renderExtraPanels()}
