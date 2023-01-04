@@ -333,18 +333,6 @@ const multiViewInitialConfig = {
 
 // PLOTS & TABLES - Saved plots
 const savedPlotsInitialConfig = {
-  selectedPlots: {
-    [plotTypes.CONTINUOUS_EMBEDDING]: plotUuids.CONTINUOUS_EMBEDDING,
-    [plotTypes.CATEGORICAL_EMBEDDING]: plotUuids.CATEGORICAL_EMBEDDING,
-    [plotTypes.HEATMAP]: plotUuids.HEATMAP,
-    [plotTypes.MARKER_HEATMAP]: plotUuids.MARKER_HEATMAP,
-    [plotTypes.VOLCANO_PLOT]: plotUuids.VOLCANO_PLOT,
-    [plotTypes.FREQUENCY_PLOT]: plotUuids.FREQUENCY_PLOT,
-    [plotTypes.VIOLIN_PLOT]: plotUuids.VIOLIN_PLOT,
-    [plotTypes.DOT_PLOT]: plotUuids.DOT_PLOT,
-    [plotTypes.TRAJECTORY_ANALYSIS]: plotUuids.TRAJECTORY_ANALYSIS,
-    [plotTypes.NORMALIZED_EXPRESSION_MATRIX]: plotUuids.NORMALIZED_EXPRESSION_MATRIX,
-  },
   [plotTypes.CONTINUOUS_EMBEDDING]: {
     plots: [plotUuids.CONTINUOUS_EMBEDDING],
     descriptions: [''],
