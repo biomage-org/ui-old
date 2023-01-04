@@ -30,7 +30,7 @@ import {
   updatePlotData,
 } from 'redux/actions/componentConfig';
 
-import { getCellSets, getSavedPlots } from 'redux/selectors';
+import { getCellSets } from 'redux/selectors';
 import { plotNames, plotTypes, plotUuids } from 'utils/constants';
 import PlatformError from 'components/PlatformError';
 
@@ -96,8 +96,6 @@ const DotPlotPage = (props) => {
 
   const cellSets = useSelector(getCellSets());
 
-  const savedPlots = useSelector(getSavedPlots());
-
   const [moreThanTwoGroups, setMoreThanTwoGroups] = useState(false);
   const [reorderAfterFetch, setReorderAfterFetch] = useState(false);
   const [reset, setReset] = useState(false);
@@ -124,21 +122,9 @@ const DotPlotPage = (props) => {
     };
 
     dispatch(loadPaginatedGeneProperties(experimentId, ['dispersions'], geneListUuid, state));
-  }, []);
 
-  useEffect(() => {
-    if (!savedPlots) return;
-
-    const selectedPlotUuid = savedPlots.selectedPlots[plotType];
-
-    if (plotUuid === selectedPlotUuid) return;
-
-    setPlotUuid(selectedPlotUuid);
-  }, [savedPlots]);
-
-  useEffect(() => {
     if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
-  }, [plotUuid]);
+  }, []);
 
   const previousComparedConfig = useRef(null);
   const getComparedConfig = (updatedConfig) => _.pick(
@@ -197,6 +183,8 @@ const DotPlotPage = (props) => {
     // If using marker genes, check that the selected number is more than 0
     if (config.useMarkerGenes && config.nMarkerGenes === 0) return false;
 
+    if (plotDataLoading) return false;
+
     if (reset) return false;
 
     return true;
@@ -244,11 +232,11 @@ const DotPlotPage = (props) => {
     const previousUseMarker = previousComparedConfig.current?.useMarkerGenes ?? false;
 
     // if loading a new saved plot
-    if (plotData.length === 0) {
+    if (!plotData || plotData?.length === 0) {
       dispatch(getDotPlot(experimentId, plotUuid, config));
       setReorderAfterFetch(true);
       return;
-    };
+    }
 
     if (_.isEqual(currentSelected, previousSelected)) {
       // if switching back from marker genes to custom genes, reorder data
@@ -525,6 +513,7 @@ const DotPlotPage = (props) => {
       <PlotContainer
         experimentId={experimentId}
         plotUuid={plotUuid}
+        setPlotUuid={setPlotUuid}
         plotType={plotType}
         plotStylingConfig={plotStylingConfig}
         extraToolbarControls={<ExportAsCSV data={getCSVData()} filename={csvFileName} />}

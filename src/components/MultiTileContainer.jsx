@@ -21,7 +21,7 @@ const renderWindow = (tile, width, height, style) => {
   );
 };
 
-const MultiTileContainer = ({ tileMap, initialArrangement, plotType }) => (
+const MultiTileContainer = ({ tileMap, initialArrangement, plotType, plotUuid, setPlotUuid }) => (
   <div style={{ height: '100%', width: '100%', margin: 0 }}>
     <Mosaic
       renderTile={(id, path) => (
@@ -34,7 +34,7 @@ const MultiTileContainer = ({ tileMap, initialArrangement, plotType }) => (
           {({ width, height }) => (
             <MosaicWindow
               path={path}
-              title={id === 'Plot' ? <PlotTileTitle plotType={plotType} /> : id}
+              title={id === 'Plot' ? <PlotTileTitle plotType={plotType} plotUuid={plotUuid} setPlotUuid={setPlotUuid} /> : id}
               toolbarControls={tileMap[id]?.toolbarControls}
             >
               {renderWindow(tileMap[id]?.component, width, height, tileMap[id]?.style)}
@@ -54,6 +54,8 @@ MultiTileContainer.propTypes = {
     PropTypes.object,
   ]).isRequired,
   plotType: PropTypes.string,
+  plotUuid: PropTypes.string.isRequired,
+  setPlotUuid: PropTypes.func.isRequired,
 };
 
 MultiTileContainer.defaultProps = {

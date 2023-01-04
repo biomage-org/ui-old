@@ -12,6 +12,7 @@ import {
   updatePlotConfig,
   resetPlotConfig,
   savePlotConfig,
+  loadPlotConfig,
 } from 'redux/actions/componentConfig';
 import _ from 'lodash';
 import PlotStyling from 'components/plots/styling/PlotStyling';
@@ -19,6 +20,7 @@ import MultiTileContainer from 'components/MultiTileContainer';
 import loadConditionalComponentConfig from 'redux/actions/componentConfig/loadConditionalComponentConfig';
 import SavePlotModal from 'components/SavePlotModal';
 import { getSavedPlots } from 'redux/selectors';
+import { plotUuids } from 'utils/constants';
 
 const PLOT = 'Plot';
 const CONTROLS = 'Controls';
@@ -27,7 +29,7 @@ const DEFAULT_ORIENTATION = 'row';
 const PlotContainer = (props) => {
   const {
     experimentId,
-    plotUuid, plotType, plotInfo,
+    plotUuid, setPlotUuid, plotType, plotInfo,
     plotStylingConfig, defaultActiveKey,
     extraToolbarControls, extraControlPanels, customControlPanel, controlsOnly,
     showResetButton, onPlotReset,
@@ -39,10 +41,15 @@ const PlotContainer = (props) => {
   const dispatch = useDispatch();
 
   const [isResetDisabled, setIsResetDisabled] = useState(true);
+  const [isDeleteDisabled, setIsDeleteDisabled] = useState(true);
   const [tileDirection, setTileDirection] = useState(DEFAULT_ORIENTATION);
   const [savePlotModalVisible, setSavePlotModalVisible] = useState(false);
   const { config } = useSelector((state) => state.componentConfig[plotUuid] || {});
+
   const savedPlots = useSelector(getSavedPlots());
+  const selectedPlotUuid = savedPlots?.selectedPlots[plotType];
+  const { config: selectedConfig } = useSelector((state) => state.componentConfig[selectedPlotUuid] || {});
+
   const debounceSave = useCallback(
     _.debounce(() => dispatch(savePlotConfig(experimentId, plotUuid)), saveDebounceTime), [plotUuid],
   );
@@ -76,7 +83,8 @@ const PlotContainer = (props) => {
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);
-    dispatch(loadConditionalComponentConfig(experimentId, 'savedPlots', 'savedPlots', false));
+
+    if (!savedPlots) dispatch(loadConditionalComponentConfig(experimentId, 'savedPlots', 'savedPlots', false));
   }, []);
 
   useEffect(() => {
@@ -92,10 +100,21 @@ const PlotContainer = (props) => {
   }, [config]);
 
   useEffect(() => {
+    if (_.includes(Object.values(plotUuids), plotUuid)) {
+      setIsDeleteDisabled(true);
+      return;
+    }
+
+    setIsDeleteDisabled(false);
+  }, [plotUuid]);
+
+  useEffect(() => {
     if (!savedPlots) return;
 
+    if (!selectedConfig) dispatch(loadPlotConfig(experimentId, selectedPlotUuid, plotType));
+
     debounceSaveSavedPlots();
-  }, [savedPlots]);
+  }, [savedPlots, selectedConfig]);
 
   const onClickReset = () => {
     onPlotReset();
@@ -103,8 +122,10 @@ const PlotContainer = (props) => {
     setIsResetDisabled(true);
   };
 
-  const onClickSaveAs = () => {
-    setSavePlotModalVisible(true);
+  const onClickDelete = () => {
+    const newPlots = _.without(savedPlots[plotType], plotUuid);
+    setPlotUuid(newPlots[0]);
+    dispatch(updatePlotConfig('savedPlots', { [plotType]: { plots: newPlots } }));
   };
 
   if (!config) {
@@ -123,9 +144,20 @@ const PlotContainer = (props) => {
           key='save-plot'
           type='primary'
           size='small'
-          onClick={onClickSaveAs}
+          onClick={() => setSavePlotModalVisible(true)}
         >
           Save as...
+        </Button>
+      }
+      {
+        <Button
+          key='delete-plot'
+          type='primary'
+          size='small'
+          onClick={onClickDelete}
+          disabled={isDeleteDisabled}
+        >
+          Delete
         </Button>
       }
       {showResetButton ? (
@@ -220,6 +252,8 @@ const PlotContainer = (props) => {
         tileMap={TILE_MAP}
         initialArrangement={windows}
         plotType={plotType}
+        plotUuid={plotUuid}
+        setPlotUuid={setPlotUuid}
       />
     </>
 
@@ -229,6 +263,7 @@ const PlotContainer = (props) => {
 PlotContainer.propTypes = {
   experimentId: PropTypes.string.isRequired,
   plotUuid: PropTypes.string.isRequired,
+  setPlotUuid: PropTypes.func.isRequired,
   plotType: PropTypes.string.isRequired,
   plotInfo: PropTypes.node,
   plotStylingConfig: PropTypes.arrayOf(PropTypes.object),
