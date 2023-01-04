@@ -24,6 +24,16 @@ Object {
       "error": false,
       "loading": true,
     },
+    "numOfGenes": Object {
+      "data": Array [],
+      "error": false,
+      "loading": true,
+    },
+    "numOfUmis": Object {
+      "data": Array [],
+      "error": false,
+      "loading": true,
+    },
   },
   "cellSets": Object {
     "error": false,
@@ -242,6 +252,7 @@ Object {
       "error": false,
       "loading": false,
       "saving": false,
+      "validating": Array [],
     },
     "test9188-d682-test-mock-cb6d644cmock-0": Object {
       "createdDate": "2021-12-07 17:36:27.773+00",
@@ -406,6 +417,16 @@ Object {
       "error": false,
       "loading": true,
     },
+    "numOfGenes": Object {
+      "data": Array [],
+      "error": false,
+      "loading": true,
+    },
+    "numOfUmis": Object {
+      "data": Array [],
+      "error": false,
+      "loading": true,
+    },
   },
   "cellSets": Object {
     "error": false,
@@ -624,6 +645,7 @@ Object {
       "error": false,
       "loading": false,
       "saving": false,
+      "validating": Array [],
     },
     "test9188-d682-test-mock-cb6d644cmock-0": Object {
       "createdDate": "2021-12-07 17:36:27.773+00",

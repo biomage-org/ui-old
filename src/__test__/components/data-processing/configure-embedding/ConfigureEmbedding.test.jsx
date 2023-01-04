@@ -48,6 +48,16 @@ const mockedStore = mockStore({
       error: false,
       data: [6, 7, 8, 9, 10],
     },
+    numOfGenes: {
+      loading: false,
+      error: false,
+      data: [6, 7, 8, 9, 10],
+    },
+    numOfUmis: {
+      loading: false,
+      error: false,
+      data: [6, 7, 8, 9, 10],
+    },
   },
   experimentSettings: {
     ...initialExperimentState,
@@ -102,13 +112,17 @@ describe('Configure Embedding', () => {
     userEvent.click(screen.getByText('Plot options'));
     expect(screen.getAllByText('Select data')).toBeDefined();
   });
-  it('renders correctly ', async () => {
+
+  it('allows selecting other plots', async () => {
     await renderConfigureEmbedding();
 
     // can select other plots
-    userEvent.click(screen.getByText('Samples'));
-    userEvent.click(screen.getByText('Mitochondrial fraction reads'));
-    userEvent.click(screen.getByText('Doublet score'));
-    userEvent.click(screen.getByText('Cell sets'));
+    ['Samples', 'Mitochondrial fraction reads', 'Doublet score', 'Cell sets', 'Number of genes', 'Number of UMIs'].forEach((plot) => {
+      userEvent.click(screen.getByText(plot));
+      // check that there are two elements with the plot name:
+      // * the main plot title
+      // * the plot view selector
+      expect(screen.getAllByText(plot).length).toEqual(2);
+    });
   });
 });
