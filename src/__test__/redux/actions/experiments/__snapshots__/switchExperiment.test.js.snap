@@ -24,6 +24,16 @@ Object {
       "error": false,
       "loading": true,
     },
+    "numOfGenes": Object {
+      "data": Array [],
+      "error": false,
+      "loading": true,
+    },
+    "numOfUmis": Object {
+      "data": Array [],
+      "error": false,
+      "loading": true,
+    },
   },
   "cellSets": Object {
     "error": false,
@@ -150,9 +160,56 @@ Object {
   },
   "genes": Object {
     "expression": Object {
-      "data": Object {},
       "error": false,
       "loading": Array [],
+      "matrix": ExpressionMatrix {
+        "geneIndexes": Object {},
+        "rawGeneExpressions": Object {
+          "datatype": undefined,
+          "index": Array [],
+          "mathjs": "SparseMatrix",
+          "ptr": Array [
+            0,
+          ],
+          "size": Array [
+            0,
+            0,
+          ],
+          "values": Array [],
+        },
+        "stats": Object {
+          "rawMean": Array [],
+          "rawStdev": Array [],
+          "truncatedMax": Array [],
+          "truncatedMin": Array [],
+        },
+        "truncatedGeneExpressions": Object {
+          "datatype": undefined,
+          "index": Array [],
+          "mathjs": "SparseMatrix",
+          "ptr": Array [
+            0,
+          ],
+          "size": Array [
+            0,
+            0,
+          ],
+          "values": Array [],
+        },
+        "zScore": Object {
+          "datatype": undefined,
+          "index": Array [],
+          "mathjs": "SparseMatrix",
+          "ptr": Array [
+            0,
+          ],
+          "size": Array [
+            0,
+            0,
+          ],
+          "values": Array [],
+        },
+      },
       "views": Object {},
     },
     "focused": undefined,
@@ -195,6 +252,7 @@ Object {
       "error": false,
       "loading": false,
       "saving": false,
+      "validating": Array [],
     },
     "test9188-d682-test-mock-cb6d644cmock-0": Object {
       "createdDate": "2021-12-07 17:36:27.773+00",
@@ -236,7 +294,8 @@ Object {
         "timePoint": "BL",
       },
       "name": "Mock sample 0",
-      "type": "10X Chromium",
+      "options": Object {},
+      "type": "10x",
       "uuid": "test9188-d682-test-mock-cb6d644cmock-0",
     },
     "test9188-d682-test-mock-cb6d644cmock-1": Object {
@@ -279,7 +338,8 @@ Object {
         "timePoint": "BL",
       },
       "name": "Mock sample 1",
-      "type": "10X Chromium",
+      "options": Object {},
+      "type": "10x",
       "uuid": "test9188-d682-test-mock-cb6d644cmock-1",
     },
     "test9188-d682-test-mock-cb6d644cmock-2": Object {
@@ -322,7 +382,8 @@ Object {
         "timePoint": "BL",
       },
       "name": "Mock sample 2",
-      "type": "10X Chromium",
+      "options": Object {},
+      "type": "10x",
       "uuid": "test9188-d682-test-mock-cb6d644cmock-2",
     },
   },
@@ -356,6 +417,16 @@ Object {
       "error": false,
       "loading": true,
     },
+    "numOfGenes": Object {
+      "data": Array [],
+      "error": false,
+      "loading": true,
+    },
+    "numOfUmis": Object {
+      "data": Array [],
+      "error": false,
+      "loading": true,
+    },
   },
   "cellSets": Object {
     "error": false,
@@ -482,9 +553,56 @@ Object {
   },
   "genes": Object {
     "expression": Object {
-      "data": Object {},
       "error": false,
       "loading": Array [],
+      "matrix": ExpressionMatrix {
+        "geneIndexes": Object {},
+        "rawGeneExpressions": Object {
+          "datatype": undefined,
+          "index": Array [],
+          "mathjs": "SparseMatrix",
+          "ptr": Array [
+            0,
+          ],
+          "size": Array [
+            0,
+            0,
+          ],
+          "values": Array [],
+        },
+        "stats": Object {
+          "rawMean": Array [],
+          "rawStdev": Array [],
+          "truncatedMax": Array [],
+          "truncatedMin": Array [],
+        },
+        "truncatedGeneExpressions": Object {
+          "datatype": undefined,
+          "index": Array [],
+          "mathjs": "SparseMatrix",
+          "ptr": Array [
+            0,
+          ],
+          "size": Array [
+            0,
+            0,
+          ],
+          "values": Array [],
+        },
+        "zScore": Object {
+          "datatype": undefined,
+          "index": Array [],
+          "mathjs": "SparseMatrix",
+          "ptr": Array [
+            0,
+          ],
+          "size": Array [
+            0,
+            0,
+          ],
+          "values": Array [],
+        },
+      },
       "views": Object {},
     },
     "focused": undefined,
@@ -527,6 +645,7 @@ Object {
       "error": false,
       "loading": false,
       "saving": false,
+      "validating": Array [],
     },
     "test9188-d682-test-mock-cb6d644cmock-0": Object {
       "createdDate": "2021-12-07 17:36:27.773+00",
@@ -568,7 +687,8 @@ Object {
         "timePoint": "BL",
       },
       "name": "Mock sample 0",
-      "type": "10X Chromium",
+      "options": Object {},
+      "type": "10x",
       "uuid": "test9188-d682-test-mock-cb6d644cmock-0",
     },
     "test9188-d682-test-mock-cb6d644cmock-1": Object {
@@ -611,7 +731,8 @@ Object {
         "timePoint": "BL",
       },
       "name": "Mock sample 1",
-      "type": "10X Chromium",
+      "options": Object {},
+      "type": "10x",
       "uuid": "test9188-d682-test-mock-cb6d644cmock-1",
     },
     "test9188-d682-test-mock-cb6d644cmock-2": Object {
@@ -654,7 +775,8 @@ Object {
         "timePoint": "BL",
       },
       "name": "Mock sample 2",
-      "type": "10X Chromium",
+      "options": Object {},
+      "type": "10x",
       "uuid": "test9188-d682-test-mock-cb6d644cmock-2",
     },
   },

@@ -1,12 +1,13 @@
-import getTimeoutForWorkerTask from 'utils/getTimeoutForWorkerTask';
 import { PLOT_DATA_LOADED, PLOT_DATA_LOADING, PLOT_DATA_ERROR } from 'redux/actionTypes/componentConfig';
+import { getBackendStatus } from 'redux/selectors';
 
 import handleError from 'utils/http/handleError';
 import endUserMessages from 'utils/endUserMessages';
-import { fetchWork, generateETag } from 'utils/work/fetchWork';
-import { getBackendStatus } from 'redux/selectors';
+import fetchWork from 'utils/work/fetchWork';
+import generateETag from 'utils/work/generateETag';
+import getTimeoutForWorkerTask from 'utils/getTimeoutForWorkerTask';
 
-const getStartingNodes = (
+const getTrajectoryPlotStartingNodes = (
   experimentId,
   plotUuid,
 ) => async (dispatch, getState) => {
@@ -16,19 +17,15 @@ const getStartingNodes = (
 
   const {
     clusteringSettings,
-  } = getState().experimentSettings.processing?.configureEmbedding || {};
-
-  const embeddingSettings = getState()
-    .experimentSettings
-    ?.processing
-    ?.configureEmbedding
-    ?.embeddingSettings;
-
-  const { methodSettings } = embeddingSettings;
+    embeddingSettings: { methodSettings },
+  } = getState().experimentSettings.processing.configureEmbedding;
 
   const { environment } = getState().networkResources;
-  const backendStatus = getBackendStatus(experimentId)(getState()).status;
-  const { pipeline: { startDate: qcPipelineStartDate } } = backendStatus;
+
+  const {
+    pipeline:
+    { startDate: qcPipelineStartDate },
+  } = getBackendStatus(experimentId)(getState()).status;
 
   const embeddingBody = {
     name: 'GetEmbedding',
@@ -36,18 +33,20 @@ const getStartingNodes = (
     config: methodSettings[embeddingMethod],
   };
 
-  const embeddingETag = generateETag(
+  const embeddingETag = await generateETag(
     experimentId,
     embeddingBody,
     undefined,
     qcPipelineStartDate,
     environment,
+    dispatch,
+    getState,
   );
 
-  const timeout = getTimeoutForWorkerTask(getState(), 'TrajectoryAnalysis');
+  const timeout = getTimeoutForWorkerTask(getState(), 'TrajectoryAnalysisStartingNodes');
 
   const body = {
-    name: 'GetStartingNodes',
+    name: 'GetTrajectoryAnalysisStartingNodes',
     embedding: {
       method: embeddingMethod,
       methodSettings: methodSettings[embeddingMethod],
@@ -66,14 +65,19 @@ const getStartingNodes = (
     });
 
     const data = await fetchWork(
-      experimentId, body, getState, { timeout, rerun: true },
+      experimentId, body, getState, dispatch, { timeout, rerun: true },
     );
+
+    const { plotData } = getState().componentConfig[plotUuid];
 
     dispatch({
       type: PLOT_DATA_LOADED,
       payload: {
         plotUuid,
-        plotData: data,
+        plotData: {
+          ...plotData,
+          nodes: data,
+        },
       },
     });
   } catch (e) {
@@ -89,4 +93,4 @@ const getStartingNodes = (
   }
 };
 
-export default getStartingNodes;
+export default getTrajectoryPlotStartingNodes;

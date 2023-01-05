@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
 import PropTypes from 'prop-types';
-import moment from 'moment';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import {
   Modal, Button, Col, Row,
 } from 'antd';
@@ -15,9 +16,7 @@ import { createAndUploadSingleFile, fileObjectToFileRecord } from 'utils/upload/
 import UploadStatus, { messageForStatus } from 'utils/upload/UploadStatus';
 import downloadSingleFile from 'utils/data-management/downloadSingleFile';
 
-// we'll need to remove the hard-coded 10x tech type once we start
-// supporting other types and save the chosen tech type in redux
-const SELECTED_TECH = '10X Chromium';
+dayjs.extend(utc);
 
 const UploadDetailsModal = (props) => {
   const dispatch = useDispatch();
@@ -33,13 +32,13 @@ const UploadDetailsModal = (props) => {
 
   const { activeExperimentId } = useSelector((state) => state.experiments.meta);
   const samples = useSelector((state) => state.samples);
-
+  const selectedTech = useSelector((state) => state.samples[sampleUuid]?.type);
   const sampleName = samples[uploadDetailsModalDataRef.current?.sampleUuid]?.name;
 
   useEffect(() => {
     if (replacementFileObject) {
-      fileObjectToFileRecord(replacementFileObject, SELECTED_TECH).then((newFile) => {
-        if (newFile.valid) { // && newFile.name === file.name ?
+      fileObjectToFileRecord(replacementFileObject, selectedTech).then((newFile) => {
+        if (newFile.valid) {
           uploadFile(newFile);
         } else {
           handleError('error', endUserMessages.ERROR_FILE_CATEGORY);
@@ -54,7 +53,7 @@ const UploadDetailsModal = (props) => {
   const toMBytes = (sizeInBytes) => (sizeInBytes / (1000 * 1000)).toFixed(2);
 
   const fromISODateToFormatted = (ISOStringDate) => {
-    const date = moment(ISOStringDate);
+    const date = dayjs(ISOStringDate);
 
     const weekDayName = date.format('dddd');
 
@@ -69,7 +68,7 @@ const UploadDetailsModal = (props) => {
       return;
     }
 
-    createAndUploadSingleFile(newFile, activeExperimentId, sampleUuid, dispatch);
+    createAndUploadSingleFile(newFile, activeExperimentId, sampleUuid, dispatch, selectedTech);
     onCancel();
   };
 

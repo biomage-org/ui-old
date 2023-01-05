@@ -1,18 +1,19 @@
 /* eslint-disable global-require */
-import { fetchWork, generateETag } from 'utils/work/fetchWork';
-import { Environment } from 'utils/deploymentInfo';
+import fetchMock, { enableFetchMocks } from 'jest-fetch-mock';
+
+import fetchWork from 'utils/work/fetchWork';
+import { makeStore } from 'redux/store';
+import { loadBackendStatus } from 'redux/actions/backendStatus';
+
+import mockAPI, { generateDefaultMockAPIResponses } from '__test__/test-utils/mockAPI';
+import { getFourGenesMatrix } from '__test__/utils/ExpressionMatrix/testMatrixes';
 
 const {
-  mockGeneExpressionData,
-  mockGeneExpressionDataZScore,
   mockGenesListData,
-  mockCacheKeyMappings,
   mockCacheGet,
   mockCacheSet,
   mockDispatchWorkRequest,
   mockSeekFromS3,
-  mockReduxState,
-  mockQcPipelineStartDate,
 } = require('__test__/utils/work/fetchWork.mock');
 
 jest.mock(
@@ -25,10 +26,9 @@ jest.mock(
 );
 
 const experimentId = '1234';
-const NON_GENE_EXPRESSION_ETAG = '013c3026bb7156d222ccd18919745195'; // pragma: allowlist secret
-const GENE_EXPRESSION_ETAG = '34c05c9d07fd24ce0c22d2bec7fd7437'; // pragma: allowlist secret
+const NON_GENE_EXPRESSION_ETAG = '713b35c59f447a9d308d0bb36521e851'; // pragma: allowlist secret
+const GENE_EXPRESSION_ABCD_ETAG = 'a669a9c313883975c1678cc8f0e5d1f7'; // pragma: allowlist secret
 const timeout = 10;
-const mockExtras = undefined;
 
 const nonGeneExpressionWorkRequest = {
   name: 'ListGenes',
@@ -39,7 +39,11 @@ const geneExpressionWorkRequest = {
   genes: ['A', 'B', 'C', 'D'],
 };
 
+enableFetchMocks();
+
 describe('fetchWork', () => {
+  let store;
+
   beforeEach(async () => {
     Storage.prototype.setItem = jest.fn();
 
@@ -49,44 +53,48 @@ describe('fetchWork', () => {
       .mockReset()
       .mockImplementationOnce(() => null)
       .mockImplementationOnce(() => mockGenesListData);
+
+    fetchMock.resetMocks();
+    fetchMock.mockIf(/.*/, mockAPI(generateDefaultMockAPIResponses(experimentId)));
+
+    store = makeStore();
+
+    await store.dispatch(loadBackendStatus(experimentId));
   });
 
   it('runs correctly for gene expression work request', async () => {
     mockSeekFromS3
       .mockReset()
       .mockImplementationOnce(() => null)
-      .mockImplementation(() => ({ D: mockGeneExpressionData.D }));
+      .mockImplementation(() => (getFourGenesMatrix()));
 
     const res = await fetchWork(
       experimentId,
       geneExpressionWorkRequest,
-      mockReduxState(experimentId),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
+    // Temporarily disabled the cache for gene expression
     expect(mockDispatchWorkRequest).toHaveBeenCalledWith(
       experimentId,
-      { name: 'GeneExpression', genes: ['D'] },
+      { name: 'GeneExpression', genes: ['A', 'B', 'C', 'D'] },
       timeout,
-      GENE_EXPRESSION_ETAG,
+      GENE_EXPRESSION_ABCD_ETAG,
       expect.anything(),
     );
 
-    // The expected response should contain the ZScore
-    const expectedResponse = {
-      D: {
-        ...mockGeneExpressionData.D,
-        ...mockGeneExpressionDataZScore.D,
-      },
-    };
+    // The expected response should be fine
 
-    expect(mockCacheGet).toHaveBeenCalledTimes(4);
-    expect(mockCacheSet).toHaveBeenCalledTimes(1);
-    expect(mockCacheSet).toHaveBeenCalledWith(
-      mockCacheKeyMappings.D,
-      expectedResponse.D,
-    );
-    expect(res).toEqual(expectedResponse);
+    // Disabled gene expression cache, so the whole thing is being loaded
+    // expect(mockCacheGet).toHaveBeenCalledTimes(4);
+    // expect(mockCacheSet).toHaveBeenCalledTimes(1);
+    // expect(mockCacheSet).toHaveBeenCalledWith(
+    //   mockCacheKeyMappings.D,
+    //   expectedResponse.D,
+    // );
+    expect(res).toMatchSnapshot();
     expect(mockSeekFromS3).toHaveBeenCalledTimes(2);
   });
 
@@ -94,7 +102,8 @@ describe('fetchWork', () => {
     const res = await fetchWork(
       experimentId,
       nonGeneExpressionWorkRequest,
-      mockReduxState(experimentId),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -124,7 +133,8 @@ describe('fetchWork', () => {
       fetchWork(
         experimentId,
         nonGeneExpressionWorkRequest,
-        mockReduxState(experimentId),
+        store.getState,
+        store.dispatch,
         { timeout: 10 },
       ),
     ).rejects.toThrow();
@@ -142,7 +152,8 @@ describe('fetchWork', () => {
     await fetchWork(
       experimentId,
       nonGeneExpressionWorkRequest,
-      mockReduxState(experimentId),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -161,7 +172,8 @@ describe('fetchWork', () => {
     await fetchWork(
       experimentId,
       nonGeneExpressionWorkRequest,
-      mockReduxState(experimentId),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -178,7 +190,8 @@ describe('fetchWork', () => {
     await fetchWork(
       experimentId,
       nonGeneExpressionWorkRequest,
-      mockReduxState(experimentId, Environment.DEVELOPMENT),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -197,7 +210,8 @@ describe('fetchWork', () => {
     await fetchWork(
       experimentId,
       nonGeneExpressionWorkRequest,
-      mockReduxState(experimentId, Environment.DEVELOPMENT),
+      store.getState,
+      store.dispatch,
       { timeout },
     );
 
@@ -208,65 +222,5 @@ describe('fetchWork', () => {
       NON_GENE_EXPRESSION_ETAG,
       expect.anything(),
     );
-  });
-});
-
-describe('generateEtag', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-
-    global.Math.random = jest.fn(() => 1);
-  });
-
-  it('Generates the correct ETag', async () => {
-    const ETag = generateETag(
-      experimentId,
-      nonGeneExpressionWorkRequest,
-      mockExtras,
-      mockQcPipelineStartDate,
-      Environment.PRODUCTION,
-    );
-
-    expect(ETag).toEqual(NON_GENE_EXPRESSION_ETAG);
-  });
-
-  it('Generates the correct geneExpression ETag', async () => {
-    const ETag = generateETag(
-      experimentId,
-      { name: 'GeneExpression', genes: ['D'] },
-      mockExtras,
-      mockQcPipelineStartDate,
-      Environment.PRODUCTION,
-    );
-
-    expect(ETag).toEqual(GENE_EXPRESSION_ETAG);
-  });
-
-  it('Generates unique key for dev environment', async () => {
-    Storage.prototype.getItem = jest.fn(() => 'true');
-
-    generateETag(
-      experimentId,
-      nonGeneExpressionWorkRequest,
-      mockExtras,
-      mockQcPipelineStartDate,
-      Environment.DEVELOPMENT,
-    );
-
-    expect(global.Math.random).toHaveBeenCalledTimes(1);
-  });
-
-  it('Does not generate a unique key for GetEmbedding in dev environment', async () => {
-    Storage.prototype.getItem = jest.fn(() => 'true');
-
-    generateETag(
-      experimentId,
-      { name: 'GetEmbedding' },
-      mockExtras,
-      mockQcPipelineStartDate,
-      Environment.DEVELOPMENT,
-    );
-
-    expect(global.Math.random).not.toHaveBeenCalled();
   });
 });

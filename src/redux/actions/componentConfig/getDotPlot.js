@@ -3,7 +3,7 @@ import { PLOT_DATA_LOADED, PLOT_DATA_LOADING, PLOT_DATA_ERROR } from 'redux/acti
 
 import handleError from 'utils/http/handleError';
 import endUserMessages from 'utils/endUserMessages';
-import { fetchWork } from 'utils/work/fetchWork';
+import fetchWork from 'utils/work/fetchWork';
 
 const getClusterNames = (state) => {
   const clusterIds = state.cellSets.hierarchy.reduce(
@@ -14,10 +14,26 @@ const getClusterNames = (state) => {
   const clusterNames = clusterIds?.map((clusterId) => state.cellSets.properties[clusterId].name);
   return clusterNames;
 };
-const orderCellSets = (data, state, config) => {
+
+const transformToPlotData = (data) => {
+  const result = [];
+
+  data.cellSetsIdx.forEach((cellSetIdx, arrIdx) => {
+    result.push({
+      avgExpression: data.avgExpression[arrIdx],
+      cellSets: data.cellSetsNames[cellSetIdx],
+      cellsPercentage: data.cellsPercentage[arrIdx],
+      geneName: data.geneNames[data.geneNameIdx[arrIdx]],
+    });
+  });
+
+  return result;
+};
+
+const orderCellSets = (data, cellSets, config) => {
   // reordering data based on the sample order
   const { selectedCellSet } = config;
-  const { hierarchy, properties } = state.cellSets;
+  const { hierarchy, properties } = cellSets;
   if (hierarchy.length) {
     const cellSetOrderKeys = hierarchy.filter((rootNode) => rootNode.key === selectedCellSet)[0]
       .children
@@ -28,6 +44,7 @@ const orderCellSets = (data, state, config) => {
     ));
   }
 };
+
 const getDotPlot = (
   experimentId,
   plotUuid,
@@ -59,16 +76,17 @@ const getDotPlot = (
     });
 
     const data = await fetchWork(
-      experimentId, body, getState, { timeout },
+      experimentId, body, getState, dispatch, { timeout },
     );
 
-    orderCellSets(data, getState(), config);
+    const plotData = transformToPlotData(data);
+    orderCellSets(plotData, getState().cellSets, config);
 
     dispatch({
       type: PLOT_DATA_LOADED,
       payload: {
         plotUuid,
-        plotData: data,
+        plotData,
       },
     });
   } catch (e) {

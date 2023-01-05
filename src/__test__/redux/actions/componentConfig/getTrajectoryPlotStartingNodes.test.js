@@ -1,7 +1,7 @@
 import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
-import getStartingNodes from 'redux/actions/componentConfig/getTrajectoryPlotStartingNodes';
-import { fetchWork } from 'utils/work/fetchWork';
+import getTrajectoryPlotStartingNodes from 'redux/actions/componentConfig/getTrajectoryPlotStartingNodes';
+import fetchWork from 'utils/work/fetchWork';
 import handleError from 'utils/http/handleError';
 
 import { PLOT_DATA_ERROR, PLOT_DATA_LOADED, PLOT_DATA_LOADING } from 'redux/actionTypes/componentConfig';
@@ -10,17 +10,8 @@ import mockStartingNodes from '__test__/data/starting_nodes.json';
 import { initialEmbeddingState } from 'redux/reducers/embeddings/initialState';
 import initialExperimentSettingsState from 'redux/reducers/experimentSettings/initialState';
 
-jest.mock('utils/work/fetchWork', () => {
-  const originalModule = jest.requireActual('utils/work/fetchWork');
-
-  return {
-    ...originalModule,
-    fetchWork: jest.fn(() => ({})),
-  };
-});
-
 jest.mock('utils/http/handleError');
-
+jest.mock('utils/work/fetchWork', () => jest.fn(() => ({})));
 jest.mock('utils/getTimeoutForWorkerTask', () => () => 60);
 
 const mockStore = configureStore([thunk]);
@@ -63,6 +54,9 @@ const initialState = {
     umap: initialEmbeddingState,
     Etag: 'mockEtag',
   },
+  componentConfig: {
+    [plotUuid]: {},
+  },
   backendStatus: { [experimentId]: { status: { pipeline: { startDate } } } },
   networkResources: {
     environment: 'testing',
@@ -81,7 +75,7 @@ describe('Get trajectory plot starting nodes', () => {
   });
 
   it('Dispatches the correct events', async () => {
-    await store.dispatch(getStartingNodes(experimentId, plotUuid));
+    await store.dispatch(getTrajectoryPlotStartingNodes(experimentId, plotUuid));
 
     const actions = store.getActions();
     expect(actions.length).toEqual(2);
@@ -93,7 +87,7 @@ describe('Get trajectory plot starting nodes', () => {
   it('Dispatches error if there are errors when fetching work', async () => {
     fetchWork.mockImplementationOnce(() => new Promise((resolve, reject) => reject(new Error('random error!'))));
 
-    await store.dispatch(getStartingNodes(experimentId, plotUuid));
+    await store.dispatch(getTrajectoryPlotStartingNodes(experimentId, plotUuid));
 
     const actions = store.getActions();
     expect(actions.length).toEqual(2);

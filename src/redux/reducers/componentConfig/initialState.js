@@ -303,22 +303,32 @@ const trajectoryAnalysisInitialConfig = {
     xAxisText: 'Umap 1',
     yAxisText: 'Umap 2',
     defaultValues: ['x', 'y'],
-    offset: 10,
   },
+  axesRanges: axesRangesBaseState,
   title: {
     ...titleBaseState,
     fontSize: 20,
   },
   fontStyle: fontStyleBaseState,
   colour: colourBaseState,
-  marker: markerBaseState,
+  marker: {
+    ...markerBaseState,
+    size: 20,
+  },
   labels: {
     ...labelBaseState,
     enabled: false,
   },
+  selectedNodes: [],
   selectedCellSet: 'louvain',
   selectedSample: 'All',
-  isZoomOrPanned: false,
+};
+
+// PLOTS & TABLES - Multi view
+const multiViewInitialConfig = {
+  ncols: 1,
+  nrows: 1,
+  plotUuids: [],
 };
 
 // EMBEDDING PREVIEW - Coloured by sample
@@ -423,6 +433,61 @@ const embeddingPreviewMitochondrialContentInitialConfig = {
 
 // EMBEDDING PREVIEW - Config for doublet score
 const embeddingPreviewDoubletScoreInitialConfig = {
+  spec: '1.0.0',
+  legend: legendBaseState,
+  dimensions: {
+    ...dimensionsBaseState,
+    width: 700,
+    height: 550,
+  },
+  axes: {
+    ...axesBaseState,
+    xAxisText: '',
+    yAxisText: '',
+    defaultValues: ['x', 'y'],
+    offset: 10,
+  },
+  axesRanges: axesRangesBaseState,
+  title: {
+    ...titleBaseState,
+    dx: 0,
+    fontSize: 20,
+  },
+  fontStyle: fontStyleBaseState,
+  colour: colourBaseState,
+  marker: markerBaseState,
+  labels: labelBaseState,
+  selectedSample: 'All',
+};
+
+const embeddingPreviewNumOfGenesInitialConfig = {
+  spec: '1.0.0',
+  legend: legendBaseState,
+  dimensions: {
+    ...dimensionsBaseState,
+    width: 700,
+    height: 550,
+  },
+  axes: {
+    ...axesBaseState,
+    xAxisText: '',
+    yAxisText: '',
+    defaultValues: ['x', 'y'],
+    offset: 10,
+  },
+  axesRanges: axesRangesBaseState,
+  title: {
+    ...titleBaseState,
+    dx: 0,
+    fontSize: 20,
+  },
+  fontStyle: fontStyleBaseState,
+  colour: colourBaseState,
+  marker: markerBaseState,
+  labels: labelBaseState,
+  selectedSample: 'All',
+};
+const embeddingPreviewNumOfUmisInitialConfig = {
   spec: '1.0.0',
   legend: legendBaseState,
   dimensions: {
@@ -822,6 +887,13 @@ const dataIntegrationElbowPlotInitialConfig = {
   ],
 };
 
+const normalizedMatrixPlotConfig = {
+  sample: [],
+  louvain: [],
+  metadata: [],
+  scratchpad: [],
+};
+
 const initialPlotConfigStates = {
   cellSizeDistributionHistogram,
   cellSizeDistributionKneePlot,
@@ -837,6 +909,7 @@ const initialPlotConfigStates = {
   volcano: volcanoInitialConfig,
   markerHeatmap: markerHeatmapInitialConfig,
   violin: violinConfig,
+  [plotTypes.NORMALIZED_EXPRESSION_MATRIX]: normalizedMatrixPlotConfig,
   [plotTypes.DOT_PLOT]: dotPlotConfig,
   [plotTypes.TRAJECTORY_ANALYSIS]: trajectoryAnalysisInitialConfig,
   frequency: frequencyInitialConfig,
@@ -844,6 +917,8 @@ const initialPlotConfigStates = {
   embeddingPreviewByCellSets: embeddingPreviewByCellSetsInitialConfig,
   embeddingPreviewMitochondrialContent: embeddingPreviewMitochondrialContentInitialConfig,
   embeddingPreviewDoubletScore: embeddingPreviewDoubletScoreInitialConfig,
+  embeddingPreviewNumOfGenes: embeddingPreviewNumOfGenesInitialConfig,
+  embeddingPreviewNumOfUmis: embeddingPreviewNumOfUmisInitialConfig,
   dataIntegrationEmbedding: dataIntegrationEmbeddingInitialConfig,
   dataIntegrationFrequency: dataIntegrationFrequencyInitialConfig,
   dataIntegrationElbow: dataIntegrationElbowPlotInitialConfig,
@@ -851,6 +926,7 @@ const initialPlotConfigStates = {
 
 const initialComponentConfigStates = {
   interactiveHeatmap: interactiveHeatmapInitialConfig,
+  multiView: multiViewInitialConfig,
 };
 
 const initialPlotDataState = {

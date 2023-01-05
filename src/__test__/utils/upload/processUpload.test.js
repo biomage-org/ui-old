@@ -14,8 +14,9 @@ import { waitFor } from '@testing-library/dom';
 import processUpload from 'utils/upload/processUpload';
 
 import loadAndCompressIfNecessary from 'utils/upload/loadAndCompressIfNecessary';
-import validate from 'utils/upload/sampleValidator';
+import validate from 'utils/upload/validate10x';
 import pushNotificationMessage from 'utils/pushNotificationMessage';
+import { sampleTech } from 'utils/constants';
 
 enableFetchMocks();
 
@@ -65,7 +66,7 @@ const getValidFiles = (cellrangerVersion) => {
   ]);
 };
 
-const sampleType = '10X Chromium';
+const sampleType = sampleTech['10X'];
 const mockSampleUuid = 'sample-uuid';
 const mockExperimentId = 'project-uuid';
 const sampleName = 'mockSampleName';
@@ -79,6 +80,7 @@ const initialState = {
     [mockExperimentId]: {
       ...experimentTemplate,
       id: mockExperimentId,
+      sampleIds: [mockSampleUuid],
     },
   },
   samples: {
@@ -126,7 +128,7 @@ jest.mock('axios', () => ({
 
 jest.mock('utils/pushNotificationMessage');
 
-jest.mock('utils/upload/sampleValidator');
+jest.mock('utils/upload/validate10x');
 
 let store = null;
 
@@ -375,7 +377,7 @@ describe('processUpload', () => {
       getValidFiles('v3'),
       sampleType,
       store.getState().samples,
-      'errorProjectUuid',
+      mockExperimentId,
       store.dispatch,
     );
 
@@ -434,7 +436,7 @@ describe('processUpload', () => {
 
   it('Should not upload sample and show notification if uploaded sample is invalid', async () => {
     validate.mockImplementationOnce(
-      () => (['Some file error']),
+      () => { throw new Error('Some file error'); },
     );
 
     await processUpload(

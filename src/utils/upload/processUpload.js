@@ -3,13 +3,15 @@ import _ from 'lodash';
 
 import axios from 'axios';
 
-import { createSample, createSampleFile, updateSampleFileUpload } from 'redux/actions/samples';
+import {
+  createSamples, createSampleFile, updateSampleFileUpload, validateSamples,
+} from 'redux/actions/samples';
 
 import UploadStatus from 'utils/upload/UploadStatus';
 import loadAndCompressIfNecessary from 'utils/upload/loadAndCompressIfNecessary';
 import { inspectFile, Verdict } from 'utils/upload/fileInspector';
-
 import getFileTypeV2 from 'utils/getFileTypeV2';
+import { sampleTech } from 'utils/constants';
 
 const MAX_RETRIES = 2;
 
@@ -67,27 +69,27 @@ const prepareAndUploadFileToS3 = async (
   dispatch(updateSampleFileUpload(projectId, sampleId, fileType, UploadStatus.UPLOADED));
 };
 
-const getMetadata = (file) => {
+const getMetadata = (file, selectedTech) => {
   const metadata = {};
-
-  if (file.name.includes('genes')) {
-    metadata.cellranger_version = 'v2';
-  } else if (file.name.includes('features')) {
-    metadata.cellranger_version = 'v3';
+  if (selectedTech === sampleTech['10X']) {
+    if (file.name.includes('genes')) {
+      metadata.cellranger_version = 'v2';
+    } else if (file.name.includes('features')) {
+      metadata.cellranger_version = 'v3';
+    }
   }
-
   return metadata;
 };
 
-const createAndUploadSingleFile = async (file, projectId, sampleId, dispatch) => {
-  const metadata = getMetadata(file);
+const createAndUploadSingleFile = async (file, experimentId, sampleId, dispatch, selectedTech) => {
+  const metadata = getMetadata(file, selectedTech);
   const fileType = getFileTypeV2(file.fileObject.name, file.fileObject.type);
 
   let signedUrl;
   try {
     signedUrl = await dispatch(
       createSampleFile(
-        projectId,
+        experimentId,
         sampleId,
         fileType,
         file.size,
@@ -101,15 +103,11 @@ const createAndUploadSingleFile = async (file, projectId, sampleId, dispatch) =>
     return;
   }
 
-  await prepareAndUploadFileToS3(projectId, sampleId, fileType, file, signedUrl, dispatch);
+  await prepareAndUploadFileToS3(experimentId, sampleId, fileType, file, signedUrl, dispatch);
 };
 
-const createAndUpload = async (sample, experimentId, dispatch) => (
-  Object.values(sample.files).map(
-    (file) => createAndUploadSingleFile(file, experimentId, sample.uuid, dispatch),
-  ));
-
-const processUpload = async (filesList, sampleType, samples, experimentId, dispatch) => {
+const processUpload = async (filesList, technology, samples, experimentId, dispatch) => {
+  // First use map to make it easy to add files in the already existing sample entry
   const samplesMap = filesList.reduce((acc, file) => {
     const pathToArray = file.name.trim().replace(/[\s]{2,}/ig, ' ').split('/');
 
@@ -138,27 +136,32 @@ const processUpload = async (filesList, sampleType, samples, experimentId, dispa
     };
   }, {});
 
-  Object.entries(samplesMap).forEach(async ([name, sample]) => {
-    const filesToUploadForSample = Object.keys(sample.files);
+  const validSamplesList = await dispatch(validateSamples(experimentId, samplesMap, technology));
 
-    // Create sample if not exists.
-    try {
-      sample.uuid ??= await dispatch(
-        createSample(
-          experimentId,
-          name,
-          sample,
-          sampleType,
-          filesToUploadForSample,
-        ),
-      );
-    } catch (e) {
-      // If sample creation fails, sample should not be created
-      return;
-    }
+  // If none of the files are in valid format, return
+  if (validSamplesList.length === 0) return;
 
-    createAndUpload(sample, experimentId, dispatch);
-  });
+  // Sort alphabetically
+  validSamplesList.sort(([oneName], [otherName]) => oneName.localeCompare(otherName));
+
+  try {
+    const sampleIdsByName = await dispatch(
+      createSamples(
+        experimentId,
+        validSamplesList,
+        technology,
+      ),
+    );
+
+    validSamplesList.forEach(([name, sample]) => {
+      Object.values(sample.files).forEach((file) => (
+        createAndUploadSingleFile(file, experimentId, sampleIdsByName[name], dispatch, technology)
+      ));
+    });
+  } catch (e) {
+    // Ignore the error, if createSamples fails we throw to
+    // avoid attempting to upload any of these broken samples
+  }
 };
 
 /**

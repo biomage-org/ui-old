@@ -40,7 +40,7 @@ const { Panel } = Collapse;
 
 const plotUuid = 'dotPlotMain';
 const plotType = plotTypes.DOT_PLOT;
-const searchBarUuid = 'geneSearchBar';
+const geneListUuid = 'geneList';
 
 const plotStylingConfig = [
   {
@@ -99,6 +99,7 @@ const DotPlotPage = (props) => {
   const [moreThanTwoGroups, setMoreThanTwoGroups] = useState(false);
   const [reorderAfterFetch, setReorderAfterFetch] = useState(false);
   const [reset, setReset] = useState(false);
+  const highestGenesLoadedRef = useRef(false);
 
   const experimentName = useSelector((state) => state.experimentSettings.info.experimentName);
   const csvFileName = fileNames(experimentName, 'DOT_PLOT', [config?.selectedCellSet, config?.selectedPoints]);
@@ -208,6 +209,7 @@ const DotPlotPage = (props) => {
     setMoreThanTwoGroups(true);
 
     const currentComparedConfig = getComparedConfig(config);
+
     if (config && !_.isEqual(previousComparedConfig.current, currentComparedConfig)) {
       // previous compared config is null on first load, use [] for previous selected genes instead
       const previousSelected = previousComparedConfig.current?.selectedGenes ?? [];
@@ -248,7 +250,11 @@ const DotPlotPage = (props) => {
 
   // if all selected genes are removed, deleteData will not run. Remove plotData manually instead
   useEffect(() => {
-    if (config?.useMarkerGenes || config?.selectedGenes.length || !plotData?.length) return;
+    if (config?.useMarkerGenes
+      || config?.selectedGenes.length
+      || !plotData?.length
+      || !previousComparedConfig.current
+    ) return;
 
     previousComparedConfig.current.selectedGenes = [];
     dispatch(updatePlotData(plotUuid, []));
@@ -269,7 +275,7 @@ const DotPlotPage = (props) => {
       pageSizeFilter: null,
     };
 
-    dispatch(loadPaginatedGeneProperties(experimentId, ['dispersions'], searchBarUuid, state));
+    dispatch(loadPaginatedGeneProperties(experimentId, ['dispersions'], geneListUuid, state));
   }, []);
 
   const treeScrollable = document.getElementById('ScrollWrapper');
@@ -279,7 +285,7 @@ const DotPlotPage = (props) => {
   }, [treeScrollable]);
 
   // find genes with highest dispersion from list of genes sorted by name
-  const loadHighestDispersionGenes = () => {
+  const setHighestDispersionGenes = () => {
     const highestDispersions = Object.values(geneData)
       .map((gene) => gene.dispersions)
       .sort()
@@ -297,11 +303,13 @@ const DotPlotPage = (props) => {
 
   // load initial state, based on highest dispersion genes from all genes
   useEffect(() => {
-    if (_.isEmpty(geneData) || !config || plotDataLoading) {
+    if (_.isEmpty(geneData) || !config || highestGenesLoadedRef.current || plotDataLoading) {
       return;
     }
-    loadHighestDispersionGenes();
-  }, [geneData]);
+
+    setHighestDispersionGenes();
+    highestGenesLoadedRef.current = true;
+  }, [geneData, config]);
 
   // When fetching new genes, reorder data to match selected genes
   useEffect(() => {
@@ -336,9 +344,17 @@ const DotPlotPage = (props) => {
     updatePlotWithChanges({ selectedGenes: genes });
   };
 
+  const onGenesSelect = (genes) => {
+    const allGenes = _.uniq([...config?.selectedGenes, ...genes]);
+
+    if (_.isEqual(allGenes, config?.selectedGenes)) return;
+
+    updatePlotWithChanges({ selectedGenes: allGenes });
+  };
+
   const onReset = () => {
     setReset(true);
-    loadHighestDispersionGenes();
+    setHighestDispersionGenes();
   };
 
   useEffect(() => {
@@ -355,11 +371,11 @@ const DotPlotPage = (props) => {
         <MarkerGeneSelection
           config={config}
           plotUuid={plotUuid}
-          searchBarUuid={searchBarUuid}
-          experimentId={experimentId}
+          genesToDisable={config.selectedGenes}
           onUpdate={updatePlotWithChanges}
           onReset={onReset}
           onGenesChange={onGenesChange}
+          onGenesSelect={onGenesSelect}
         />
       </Panel>
       <Panel header='Select data' key='select-data'>
