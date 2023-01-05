@@ -1,6 +1,6 @@
 const legendBaseState = {
   enabled: true,
-  position: 'top-right',
+  position: 'right',
   colour: '#000000',
 };
 

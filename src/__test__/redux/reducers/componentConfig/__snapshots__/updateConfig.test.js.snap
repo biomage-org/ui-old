@@ -49,7 +49,7 @@ Object {
       "legend": Object {
         "colour": "#000000",
         "enabled": true,
-        "position": "top",
+        "position": "right",
       },
       "marker": Object {
         "opacity": 5,
