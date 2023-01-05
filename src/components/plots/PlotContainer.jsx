@@ -12,7 +12,6 @@ import {
   updatePlotConfig,
   resetPlotConfig,
   savePlotConfig,
-  loadPlotConfig,
 } from 'redux/actions/componentConfig';
 import _ from 'lodash';
 import PlotStyling from 'components/plots/styling/PlotStyling';
@@ -47,9 +46,6 @@ const PlotContainer = (props) => {
   const { config } = useSelector((state) => state.componentConfig[plotUuid] || {});
 
   const savedPlots = useSelector(getSavedPlots());
-
-  const selectedPlotUuid = savedPlots?.selectedPlots?.[plotType];
-  const { config: selectedConfig } = useSelector((state) => state.componentConfig[selectedPlotUuid] || {});
 
   const debounceSave = useCallback(
     _.debounce(() => dispatch(savePlotConfig(experimentId, plotUuid)), saveDebounceTime), [plotUuid],
@@ -112,10 +108,8 @@ const PlotContainer = (props) => {
   useEffect(() => {
     if (!savedPlots) return;
 
-    if (!selectedConfig) dispatch(loadPlotConfig(experimentId, selectedPlotUuid, plotType));
-
     debounceSaveSavedPlots();
-  }, [savedPlots, selectedConfig]);
+  }, [savedPlots]);
 
   const onClickReset = () => {
     onPlotReset();
@@ -259,6 +253,7 @@ const PlotContainer = (props) => {
         style={{ backgroundColor: 'white' }}
         tileMap={TILE_MAP}
         initialArrangement={windows}
+        experimentId={experimentId}
         plotType={plotType}
         plotUuid={plotUuid}
         setPlotUuid={setPlotUuid}

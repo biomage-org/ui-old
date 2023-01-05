@@ -7,7 +7,6 @@ import {
   Space,
   Form,
   Input,
-  Typography,
 } from 'antd';
 import validateInputs, { rules } from 'utils/validateInputs';
 import { plotTypes } from 'utils/constants';
@@ -15,7 +14,6 @@ import { updatePlotConfig } from 'redux/actions/componentConfig';
 import { getSavedPlots } from 'redux/selectors';
 import loadConditionalComponentConfig from 'redux/actions/componentConfig/loadConditionalComponentConfig';
 
-const { Text } = Typography;
 const { TextArea } = Input;
 
 const savedPlotsUuid = 'savedPlots';
