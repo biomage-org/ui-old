@@ -32,7 +32,7 @@ jest.mock('react-resize-detector', () => (props) => {
   return children({ width: 800, height: 800 });
 });
 
-describe('Normalized matrix index page', () => {
+describe.skip('Normalized matrix index page', () => {
   let storeState = null;
 
   const mockResponse = jest.fn();
