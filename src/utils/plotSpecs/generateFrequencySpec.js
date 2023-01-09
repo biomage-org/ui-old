@@ -2,6 +2,8 @@ import _ from 'lodash';
 
 import { intersection } from '../cellSetOperations';
 
+const PADDING_SIZE = 5;
+
 const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
   const frequencyProportional = config.frequencyType === 'proportional';
   const yAutoDomain = frequencyProportional ? [0, 100] : { data: 'plotData', field: 'y1' };
@@ -26,15 +28,23 @@ const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
     //  each name and multiplying by each approx char size, 5.5
     //  plus 30 for the color symbol and offset
     const colorSymbolSize = 30;
-    const characterSize = 5.5;
-    const maxLegendItemsPerRow = config.dimensions.height / characterSize;
+    const characterSizeHorizontal = 5.5;
+    const characterSizeVertical = 11;
+    const xTickSize = 140;
+    const maxLegendItemsPerRow = Math.floor(
+      (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
+      / characterSizeVertical,
+    );
+
+    console.log('*** config.dimensions.height', config.dimensions.height);
+    console.log('*** maxLegendItemsPerRow', maxLegendItemsPerRow);
 
     const legendSize = colorSymbolSize + _.max(
-      yNamesToDisplay.map((legendName) => legendName.length * characterSize),
+      yNamesToDisplay.map((legendName) => legendName.length * characterSizeHorizontal),
     );
 
     const legendColumns = positionIsRight
-      ? Math.floor(yNamesToDisplay.length / maxLegendItemsPerRow)
+      ? Math.ceil(yNamesToDisplay.length / maxLegendItemsPerRow)
       : Math.floor((config.dimensions.width) / legendSize);
     const labelLimit = positionIsRight ? 0 : legendSize;
 
@@ -76,7 +86,7 @@ const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
     height: config.dimensions.height,
     autosize: { type: 'fit', resize: true },
     background: config.colour.toggleInvert,
-    padding: 5,
+    padding: PADDING_SIZE,
 
     data: [
       {
