@@ -395,7 +395,7 @@ const generateSpec = (config, plotData) => {
     const positionIsRight = config.legend.position === 'right';
 
     const legendColumns = positionIsRight
-      ? Math.ceil(groups.length / 20)
+      ? Math.ceil(groups.length / 40)
       : Math.floor(config.dimensions.width / 85);
     const labelLimit = positionIsRight ? 0 : 85;
     if (positionIsRight) {

@@ -1,10 +1,6 @@
 const generateSpec = (config, groupName, data, displayLabels = true) => {
   const cellSetNames = data.trackGroupData.map(({ name }) => name);
-
-  // Do not display gene labels by default if thre are more than 53
-  // as the gene names will squash up
-
-  const verticalLegendColumns = Math.ceil(cellSetNames.length / 20);
+  const verticalLegendColumns = Math.ceil(cellSetNames.length / 40);
   const extraLabels = displayLabels ? [
     {
       domain: false,

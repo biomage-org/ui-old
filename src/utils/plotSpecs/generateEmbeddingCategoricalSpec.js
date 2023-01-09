@@ -45,7 +45,7 @@ const generateSpec = (config, plotData, cellSetLegendsData) => {
 
     // only 20 rows per column if the legend is on the right
     const legendColumns = positionIsRight
-      ? Math.ceil(cellSetLegendsData.length / 20)
+      ? Math.ceil(cellSetLegendsData.length / 40)
       : Math.floor((config.dimensions.width) / legendSize);
     const labelLimit = positionIsRight ? 0 : legendSize;
 
