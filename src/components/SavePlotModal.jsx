@@ -159,9 +159,13 @@ const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
 
 SavePlotModal.propTypes = {
   experimentId: PropTypes.string.isRequired,
-  config: PropTypes.object.isRequired,
+  config: PropTypes.object,
   plotType: PropTypes.string.isRequired,
   onExit: PropTypes.func.isRequired,
 };
+
+SavePlotModal.defaultProps = {
+  config: {},
+}
 
 export default SavePlotModal;

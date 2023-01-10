@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
-  Button, Card, Skeleton, Space, Tooltip,
+  Button, Card, Space, Tooltip,
 } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { initialPlotConfigStates } from 'redux/reducers/componentConfig/initialState';
@@ -129,14 +129,6 @@ const PlotContainer = (props) => {
     setPlotUuid(newPlots[0]);
     dispatch(updatePlotConfig('savedPlots', { [plotType]: { plots: newPlots, descriptions: newDescriptions } }));
   };
-
-  if (!config) {
-    return (
-      <div style={{ paddingLeft: '2em' }}>
-        <Skeleton active paragraph={{ rows: 1 }} title={{ width: 500 }} />
-      </div>
-    );
-  }
 
   const renderPlotToolbarControls = () => (
     <Space style={{ marginRight: '0.5em' }}>

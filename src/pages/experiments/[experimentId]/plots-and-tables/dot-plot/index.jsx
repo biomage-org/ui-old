@@ -392,7 +392,7 @@ const DotPlotPage = (props) => {
         <MarkerGeneSelection
           config={config}
           plotUuid={plotUuid}
-          genesToDisable={config.selectedGenes}
+          genesToDisable={config?.selectedGenes}
           onUpdate={updatePlotWithChanges}
           onReset={onReset}
           onGenesChange={onGenesChange}
@@ -412,7 +412,7 @@ const DotPlotPage = (props) => {
           <Form.Item>
             <Radio.Group
               onChange={(e) => updatePlotWithChanges({ useAbsoluteScale: e.target.value })}
-              value={config.useAbsoluteScale}
+              value={config?.useAbsoluteScale}
             >
               <Radio key='absolute' value>Absolute</Radio>
               <Radio key='relative' value={false}>Relative</Radio>
@@ -422,10 +422,6 @@ const DotPlotPage = (props) => {
       </Panel>
     </>
   );
-
-  if (!config) {
-    return <Skeleton />;
-  }
 
   const renderPlot = () => {
     if (cellSets.error) {
@@ -437,6 +433,10 @@ const DotPlotPage = (props) => {
           />
         </center>
       );
+    }
+
+    if (!config) {
+      return <Skeleton />;
     }
 
     if (plotDataError) {
