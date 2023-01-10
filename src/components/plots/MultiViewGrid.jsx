@@ -28,6 +28,10 @@ const MultiViewGrid = (props) => {
   const previousMultiViewConfig = useRef({});
 
   useEffect(() => {
+    previousMultiViewConfig.current = {};
+  }, [multiViewUuid]);
+
+  useEffect(() => {
     if (
       !multiViewConfig
       || _.isEqual(previousMultiViewConfig.current, multiViewConfig)
