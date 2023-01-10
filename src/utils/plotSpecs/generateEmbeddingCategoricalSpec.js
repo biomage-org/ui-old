@@ -2,6 +2,8 @@
 import _ from 'lodash';
 import { getAllCells, getSampleCells } from 'utils/cellSets';
 
+const PADDING_SIZE = 5;
+
 const generateSpec = (config, plotData, cellSetLegendsData) => {
   const xScaleDomain = config.axesRanges.xAxisAuto
     ? { data: 'values', field: 'x' }
@@ -37,15 +39,21 @@ const generateSpec = (config, plotData, cellSetLegendsData) => {
     //  each name and multiplying by each approx char size, 5.5
     //  plus 30 for the color symbol and offset
     const colorSymbolSize = 30;
-    const characterSize = 5.5;
+    const characterSizeHorizontal = 5.5;
+    const characterSizeVertical = 16;
+    const xTickSize = 140;
+    const maxLegendItemsPerRow = Math.floor(
+      (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
+      / characterSizeVertical,
+    );
 
     const legendSize = colorSymbolSize + _.max(
-      cellSetLegendsData.map((legendData) => legendData.name.length * characterSize),
+      cellSetLegendsData.map((legendData) => legendData.name.length * characterSizeHorizontal),
     );
 
     // only 20 rows per column if the legend is on the right
     const legendColumns = positionIsRight
-      ? Math.ceil(cellSetLegendsData.length / 40)
+      ? Math.ceil(cellSetLegendsData.length / maxLegendItemsPerRow)
       : Math.floor((config.dimensions.width) / legendSize);
     const labelLimit = positionIsRight ? 0 : legendSize;
 
