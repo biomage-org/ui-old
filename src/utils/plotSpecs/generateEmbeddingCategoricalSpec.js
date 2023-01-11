@@ -43,7 +43,7 @@ const generateSpec = (config, plotData, cellSetLegendsData) => {
     const characterSizeVertical = 11;
     const xTickSize = 140;
 
-    const maxLegendItemsPerRow = Math.floor(
+    const maxLegendItemsPerCol = Math.floor(
       (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
       / characterSizeVertical,
     );
@@ -54,7 +54,7 @@ const generateSpec = (config, plotData, cellSetLegendsData) => {
 
     // only 20 rows per column if the legend is on the right
     const legendColumns = positionIsRight
-      ? Math.ceil(cellSetLegendsData.length / maxLegendItemsPerRow)
+      ? Math.ceil(cellSetLegendsData.length / maxLegendItemsPerCol)
       : Math.floor((config.dimensions.width) / legendSize);
     const labelLimit = positionIsRight ? 0 : legendSize;
 

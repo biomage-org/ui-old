@@ -31,20 +31,17 @@ const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
     const characterSizeHorizontal = 5.5;
     const characterSizeVertical = 16;
     const xTickSize = 140;
-    const maxLegendItemsPerRow = Math.floor(
+    const maxLegendItemsPerCol = Math.floor(
       (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
       / characterSizeVertical,
     );
-
-    console.log('*** config.dimensions.height', config.dimensions.height);
-    console.log('*** maxLegendItemsPerRow', maxLegendItemsPerRow);
 
     const legendSize = colorSymbolSize + _.max(
       yNamesToDisplay.map((legendName) => legendName.length * characterSizeHorizontal),
     );
 
     const legendColumns = positionIsRight
-      ? Math.ceil(yNamesToDisplay.length / maxLegendItemsPerRow)
+      ? Math.ceil(yNamesToDisplay.length / maxLegendItemsPerCol)
       : Math.floor((config.dimensions.width) / legendSize);
     const labelLimit = positionIsRight ? 0 : legendSize;
 

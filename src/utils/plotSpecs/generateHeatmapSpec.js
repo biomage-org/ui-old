@@ -1,6 +1,16 @@
 const generateSpec = (config, groupName, data, displayLabels = true) => {
   const cellSetNames = data.trackGroupData.map(({ name }) => name);
-  const verticalLegendColumns = Math.ceil(cellSetNames.length / 40);
+
+  const PADDING_SIZE = 5;
+  const characterSizeVertical = 14;
+  const xTickSize = 140;
+
+  const maxLegendItemsPerCol = Math.floor(
+    (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
+      / characterSizeVertical,
+  );
+
+  const verticalLegendColumns = Math.ceil(cellSetNames.length / maxLegendItemsPerCol);
   const extraLabels = displayLabels ? [
     {
       domain: false,
@@ -9,23 +19,17 @@ const generateSpec = (config, groupName, data, displayLabels = true) => {
     },
   ] : [];
 
+  const orientation = config.legend.position === 'vertical'
+    ? { orient: 'left' }
+    : { orient: 'bottom', direction: 'horizontal' };
+
   let legend = [
-    {
-      fill: 'color',
-      type: 'gradient',
-      orient: 'bottom',
-      direction: 'horizontal',
-      title: ['Intensity'],
-      labelFont: config.fontStyle.font,
-      titleFont: config.fontStyle.font,
-      gradientLength: { signal: 'width' },
-      labelSeparation: { signal: 'width' },
-    },
     {
       fill: 'cellSetColors',
       title: groupName,
       type: 'symbol',
       orient: 'right',
+      columns: verticalLegendColumns,
       direction: 'vertical',
       offset: 40,
       symbolType: 'square',
@@ -37,47 +41,22 @@ const generateSpec = (config, groupName, data, displayLabels = true) => {
           },
         },
       },
-      columns: verticalLegendColumns,
       labelFont: config.fontStyle.font,
       titleFont: config.fontStyle.font,
       symbolLimit: 0,
     },
-  ];
+    {
+      fill: 'color',
+      type: 'gradient',
+      title: ['Intensity'],
+      labelFont: config.fontStyle.font,
+      titleFont: config.fontStyle.font,
+      gradientLength: { signal: 'width' },
+      labelSeparation: { signal: 'width' },
+      ...orientation,
+    },
 
-  if (config.legend.position === 'vertical') {
-    legend = [
-      {
-        fill: 'color',
-        type: 'gradient',
-        title: ['Intensity'],
-        orient: 'left',
-        labelFont: config.fontStyle.font,
-        titleFont: config.fontStyle.font,
-        gradientLength: { signal: 'height / 3' },
-        labelSeparation: { signal: 'height / 3' },
-      },
-      {
-        fill: 'cellSetColors',
-        title: groupName,
-        type: 'symbol',
-        orient: 'right',
-        symbolType: 'square',
-        symbolSize: 200,
-        encode: {
-          labels: {
-            update: {
-              text: { scale: 'cellSetNames', field: 'label' },
-            },
-          },
-        },
-        direction: 'vertical',
-        labelFont: config.fontStyle.font,
-        titleFont: config.fontStyle.font,
-        labels: {
-          text: 'asdsa',
-        },
-      }];
-  }
+  ];
 
   if (!config.legend.enabled) {
     legend = null;
