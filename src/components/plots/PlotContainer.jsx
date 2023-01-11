@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
-  Button, Card, Skeleton, Space, Tooltip,
+  Button, Card, Space, Tooltip,
 } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { initialPlotConfigStates } from 'redux/reducers/componentConfig/initialState';
@@ -16,6 +16,10 @@ import {
 import _ from 'lodash';
 import PlotStyling from 'components/plots/styling/PlotStyling';
 import MultiTileContainer from 'components/MultiTileContainer';
+import loadConditionalComponentConfig from 'redux/actions/componentConfig/loadConditionalComponentConfig';
+import SavePlotModal from 'components/SavePlotModal';
+import { getSavedPlots } from 'redux/selectors';
+import { plotUuids } from 'utils/constants';
 
 const PLOT = 'Plot';
 const CONTROLS = 'Controls';
@@ -24,7 +28,7 @@ const DEFAULT_ORIENTATION = 'row';
 const PlotContainer = (props) => {
   const {
     experimentId,
-    plotUuid, plotType, plotInfo,
+    plotUuid, setPlotUuid, plotType, plotInfo,
     plotStylingConfig, defaultActiveKey,
     extraToolbarControls, extraControlPanels, customControlPanel, controlsOnly,
     showResetButton, onPlotReset,
@@ -36,10 +40,18 @@ const PlotContainer = (props) => {
   const dispatch = useDispatch();
 
   const [isResetDisabled, setIsResetDisabled] = useState(true);
+  const [isDeleteDisabled, setIsDeleteDisabled] = useState(true);
   const [tileDirection, setTileDirection] = useState(DEFAULT_ORIENTATION);
+  const [savePlotModalVisible, setSavePlotModalVisible] = useState(false);
   const { config } = useSelector((state) => state.componentConfig[plotUuid] || {});
+
+  const savedPlots = useSelector(getSavedPlots());
+
   const debounceSave = useCallback(
     _.debounce(() => dispatch(savePlotConfig(experimentId, plotUuid)), saveDebounceTime), [plotUuid],
+  );
+  const debounceSaveSavedPlots = useCallback(
+    _.debounce(() => dispatch(savePlotConfig(experimentId, 'savedPlots')), saveDebounceTime), [],
   );
 
   const defaultOnUpdate = (obj) => {
@@ -68,6 +80,8 @@ const PlotContainer = (props) => {
 
   useEffect(() => {
     window.addEventListener('resize', handleResize);
+
+    if (!savedPlots) dispatch(loadConditionalComponentConfig(experimentId, 'savedPlots', 'savedPlots', false));
   }, []);
 
   useEffect(() => {
@@ -82,23 +96,64 @@ const PlotContainer = (props) => {
     );
   }, [config]);
 
+  useEffect(() => {
+    if (_.includes(Object.values(plotUuids), plotUuid)) {
+      setIsDeleteDisabled(true);
+      return;
+    }
+
+    setIsDeleteDisabled(false);
+  }, [plotUuid]);
+
+  useEffect(() => {
+    if (!savedPlots) return;
+
+    debounceSaveSavedPlots();
+  }, [savedPlots]);
+
   const onClickReset = () => {
     onPlotReset();
     dispatch(resetPlotConfig(experimentId, plotUuid, plotType));
     setIsResetDisabled(true);
   };
 
-  if (!config) {
-    return (
-      <div style={{ paddingLeft: '2em' }}>
-        <Skeleton active paragraph={{ rows: 1 }} title={{ width: 500 }} />
-      </div>
-    );
-  }
+  const onClickDelete = () => {
+    const { plots, descriptions } = savedPlots[plotType];
+    const indexToRemove = plots.indexOf(plotUuid);
+
+    const newPlots = [...plots];
+    const newDescriptions = [...descriptions];
+    newPlots.splice(indexToRemove, 1);
+    newDescriptions.splice(indexToRemove, 1);
+
+    setPlotUuid(newPlots[0]);
+    dispatch(updatePlotConfig('savedPlots', { [plotType]: { plots: newPlots, descriptions: newDescriptions } }));
+  };
 
   const renderPlotToolbarControls = () => (
     <Space style={{ marginRight: '0.5em' }}>
       {extraToolbarControls}
+      {
+        <Button
+          key='save-plot'
+          type='primary'
+          size='small'
+          onClick={() => setSavePlotModalVisible(true)}
+        >
+          Save as...
+        </Button>
+      }
+      {
+        <Button
+          key='delete-plot'
+          type='primary'
+          size='small'
+          onClick={onClickDelete}
+          disabled={isDeleteDisabled}
+        >
+          Delete
+        </Button>
+      }
       {showResetButton ? (
         <Button
           key='reset-plot'
@@ -177,17 +232,34 @@ const PlotContainer = (props) => {
   }
 
   return (
-    <MultiTileContainer
-      style={{ backgroundColor: 'white' }}
-      tileMap={TILE_MAP}
-      initialArrangement={windows}
-    />
+    <>
+      {savePlotModalVisible ? (
+        <SavePlotModal
+          experimentId={experimentId}
+          config={config}
+          plotUuid={plotUuid}
+          plotType={plotType}
+          onExit={() => setSavePlotModalVisible(false)}
+        />
+      ) : <></>}
+      <MultiTileContainer
+        style={{ backgroundColor: 'white' }}
+        tileMap={TILE_MAP}
+        initialArrangement={windows}
+        experimentId={experimentId}
+        plotType={plotType}
+        plotUuid={plotUuid}
+        setPlotUuid={setPlotUuid}
+      />
+    </>
+
   );
 };
 
 PlotContainer.propTypes = {
   experimentId: PropTypes.string.isRequired,
   plotUuid: PropTypes.string.isRequired,
+  setPlotUuid: PropTypes.func.isRequired,
   plotType: PropTypes.string.isRequired,
   plotInfo: PropTypes.node,
   plotStylingConfig: PropTypes.arrayOf(PropTypes.object),

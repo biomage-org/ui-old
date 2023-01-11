@@ -20,12 +20,11 @@ import {
 import { loadCellSets } from 'redux/actions/cellSets';
 import { loadGeneExpression, loadPaginatedGeneProperties } from 'redux/actions/genes';
 import { getCellSets } from 'redux/selectors';
-import { plotNames } from 'utils/constants';
+import { plotNames, plotTypes, plotUuids } from 'utils/constants';
 
 const { Panel } = Collapse;
 
-const plotUuid = 'embeddingContinuousMain';
-const plotType = 'embeddingContinuous';
+const plotType = plotTypes.CONTINUOUS_EMBEDDING;
 const PROPERTIES = ['dispersions'];
 const tableState = {
   pagination: {
@@ -36,6 +35,8 @@ const tableState = {
 };
 
 const ContinuousEmbeddingPage = ({ experimentId }) => {
+  const [plotUuid, setPlotUuid] = useState(plotUuids.CONTINUOUS_EMBEDDING);
+
   const dispatch = useDispatch();
   const config = useSelector((state) => state.componentConfig[plotUuid]?.config);
   const loadedGene = useSelector((state) => state.genes.expression.views[plotUuid]?.data);
@@ -150,6 +151,7 @@ const ContinuousEmbeddingPage = ({ experimentId }) => {
       <PlotContainer
         experimentId={experimentId}
         plotUuid={plotUuid}
+        setPlotUuid={setPlotUuid}
         plotType={plotType}
         plotStylingConfig={plotStylingConfig}
         extraControlPanels={renderExtraPanels()}

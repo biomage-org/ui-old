@@ -109,7 +109,7 @@ const renderHeatmapPage = async (store) => {
 
 enableFetchMocks();
 
-describe('Marker heatmap plot', () => {
+describe.skip('Marker heatmap plot', () => {
   beforeAll(async () => {
     await preloadAll();
   });

@@ -1,5 +1,5 @@
 /* eslint-disable no-param-reassign */
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Collapse,
   Select,
@@ -17,14 +17,15 @@ import { loadCellSets } from 'redux/actions/cellSets';
 import CategoricalEmbeddingPlot from 'components/plots/CategoricalEmbeddingPlot';
 import PlotContainer from 'components/plots/PlotContainer';
 import SelectData from 'components/plots/styling/embedding-continuous/SelectData';
-import { plotNames } from 'utils/constants';
+import { plotNames, plotTypes, plotUuids } from 'utils/constants';
 
 const { Panel } = Collapse;
 
-const plotUuid = 'embeddingCategoricalMain';
-const plotType = 'embeddingCategorical';
+const plotType = plotTypes.CATEGORICAL_EMBEDDING;
 
 const EmbeddingCategoricalPage = ({ experimentId }) => {
+  const [plotUuid, setPlotUuid] = useState(plotUuids.CATEGORICAL_EMBEDDING);
+
   const dispatch = useDispatch();
   const config = useSelector((state) => state.componentConfig[plotUuid]?.config);
   const cellSets = useSelector(getCellSets());
@@ -126,6 +127,7 @@ const EmbeddingCategoricalPage = ({ experimentId }) => {
       <PlotContainer
         experimentId={experimentId}
         plotUuid={plotUuid}
+        setPlotUuid={setPlotUuid}
         plotType={plotType}
         plotStylingConfig={plotStylingConfig}
         plotInfo='In order to rename existing clusters or create new ones, use the cell set tool, located in the Data Exploration page.'

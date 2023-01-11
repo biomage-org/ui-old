@@ -15,7 +15,7 @@ import Header from 'components/Header';
 import PlotContainer from 'components/plots/PlotContainer';
 import ViolinPlot from 'components/plots/ViolinPlot';
 import { getCellSets, getGeneList, getPlotConfigs } from 'redux/selectors';
-import { plotNames } from 'utils/constants';
+import { plotNames, plotTypes, plotUuids } from 'utils/constants';
 import MultiViewGrid from 'components/plots/MultiViewGrid';
 import { loadGeneExpression } from 'redux/actions/genes';
 import PlatformError from 'components/PlatformError';
@@ -24,12 +24,13 @@ import loadConditionalComponentConfig from 'redux/actions/componentConfig/loadCo
 import loadGeneList from 'redux/actions/genes/loadGeneList';
 import getHighestDispersionGenes from 'utils/getHighestDispersionGenes';
 
-const plotUuid = 'ViolinMain';
-const plotType = 'violin';
+const plotType = plotTypes.VIOLIN_PLOT;
 const multiViewType = 'multiView';
-const multiViewUuid = 'multiView-ViolinMain';
 
 const ViolinIndex = ({ experimentId }) => {
+  const [plotUuid, setPlotUuid] = useState(plotUuids.VIOLIN_PLOT);
+  const multiViewUuid = `multiView-${plotUuid}`;
+
   const dispatch = useDispatch();
 
   const multiViewConfig = useSelector((state) => state.componentConfig[multiViewUuid]?.config);
@@ -89,13 +90,13 @@ const ViolinIndex = ({ experimentId }) => {
     dispatch(loadCellSets(experimentId));
 
     dispatch(loadGeneList(experimentId));
-
-    if (!multiViewConfig) {
-      const customConfig = { plotUuids: [plotUuid] };
-      loadComponent(multiViewUuid, multiViewType, false, customConfig);
-      loadComponent(plotUuid, plotType, false);
-    }
   }, []);
+
+  useEffect(() => {
+    if (!multiViewConfig) {
+      loadComponent(multiViewUuid, multiViewType, false);
+    }
+  }, [plotUuid]);
 
   // if selected plot uuid is not shown, change selection
   useEffect(() => {
@@ -153,7 +154,7 @@ const ViolinIndex = ({ experimentId }) => {
     ));
 
     if (genesToLoad.length > 0) {
-      dispatch(loadGeneExpression(experimentId, genesToLoad, plotUuid));
+      dispatch(loadGeneExpression(experimentId, genesToLoad, plotUuids.VIOLIN_PLOT));
     }
   }, [plotConfigs, geneExpression]);
 
@@ -299,6 +300,7 @@ const ViolinIndex = ({ experimentId }) => {
       <PlotContainer
         experimentId={experimentId}
         plotUuid={selectedPlotUuid}
+        setPlotUuid={setPlotUuid}
         plotType={plotType}
         plotStylingConfig={plotStylingConfig}
         plotInfo='In order to rename existing clusters or create new ones, use the cell set tool, located in the Data Exploration page.'

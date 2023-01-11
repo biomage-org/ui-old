@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import _ from 'lodash';
 import propTypes from 'prop-types';
 import {
   Space,
@@ -17,6 +18,8 @@ const MarkerGeneSelection = (props) => {
   const [numGenes, setNumGenes] = useState(config.nMarkerGenes);
 
   const renderOptions = () => {
+    if (_.isEmpty(config)) return <></>;
+
     if (config.useMarkerGenes) {
       return (
         <div>
@@ -88,12 +91,17 @@ const MarkerGeneSelection = (props) => {
 
 MarkerGeneSelection.propTypes = {
   onUpdate: propTypes.func.isRequired,
-  config: propTypes.object.isRequired,
+  config: propTypes.object,
   onReset: propTypes.func.isRequired,
   plotUuid: propTypes.string.isRequired,
-  genesToDisable: propTypes.array.isRequired,
+  genesToDisable: propTypes.array,
   onGenesChange: propTypes.func.isRequired,
   onGenesSelect: propTypes.func.isRequired,
+};
+
+MarkerGeneSelection.defaultProps = {
+  config: {},
+  genesToDisable: [],
 };
 
 export default MarkerGeneSelection;

@@ -4,6 +4,7 @@ import { Mosaic, MosaicWindow } from 'react-mosaic-component';
 import ReactResizeDetector from 'react-resize-detector';
 import 'react-mosaic-component/react-mosaic-component.css';
 import { layout } from 'utils/constants';
+import PlotTileTitle from 'components/PlotTileTitle';
 
 const renderWindow = (tile, width, height, style) => {
   if (!tile) return <></>;
@@ -20,31 +21,51 @@ const renderWindow = (tile, width, height, style) => {
   );
 };
 
-const MultiTileContainer = ({ tileMap, initialArrangement }) => (
-  <div style={{ height: '100%', width: '100%', margin: 0 }}>
-    <Mosaic
-      renderTile={(id, path) => (
-        <ReactResizeDetector
-          handleWidth
-          handleHeight
-          refreshMode='throttle'
-          refreshRate={500}
-        >
-          {({ width, height }) => (
-            <MosaicWindow
-              path={path}
-              title={id}
-              toolbarControls={tileMap[id]?.toolbarControls}
-            >
-              {renderWindow(tileMap[id]?.component, width, height, tileMap[id]?.style)}
-            </MosaicWindow>
-          )}
-        </ReactResizeDetector>
-      )}
-      initialValue={initialArrangement}
-    />
-  </div>
-);
+const MultiTileContainer = (props) => {
+  const {
+    tileMap,
+    initialArrangement,
+    experimentId,
+    plotType,
+    plotUuid,
+    setPlotUuid,
+  } = props;
+
+  return (
+    <div style={{ height: '100%', width: '100%', margin: 0 }}>
+      <Mosaic
+        renderTile={(id, path) => (
+          <ReactResizeDetector
+            handleWidth
+            handleHeight
+            refreshMode='throttle'
+            refreshRate={500}
+          >
+            {({ width, height }) => (
+              <MosaicWindow
+                path={path}
+                title={id === 'Plot'
+                  ? (
+                    <PlotTileTitle
+                      experimentId={experimentId}
+                      plotType={plotType}
+                      plotUuid={plotUuid}
+                      setPlotUuid={setPlotUuid}
+                    />
+                  )
+                  : id}
+                toolbarControls={tileMap[id]?.toolbarControls}
+              >
+                {renderWindow(tileMap[id]?.component, width, height, tileMap[id]?.style)}
+              </MosaicWindow>
+            )}
+          </ReactResizeDetector>
+        )}
+        initialValue={initialArrangement}
+      />
+    </div>
+  );
+};
 
 MultiTileContainer.propTypes = {
   tileMap: PropTypes.object.isRequired,
@@ -52,6 +73,17 @@ MultiTileContainer.propTypes = {
     PropTypes.string,
     PropTypes.object,
   ]).isRequired,
+  experimentId: PropTypes.string,
+  plotType: PropTypes.string,
+  plotUuid: PropTypes.string,
+  setPlotUuid: PropTypes.func,
+};
+
+MultiTileContainer.defaultProps = {
+  experimentId: '',
+  plotType: '',
+  plotUuid: '',
+  setPlotUuid: () => {},
 };
 
 export default MultiTileContainer;

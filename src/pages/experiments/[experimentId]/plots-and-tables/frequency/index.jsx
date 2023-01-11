@@ -24,16 +24,17 @@ import { updatePlotConfig, loadPlotConfig } from 'redux/actions/componentConfig'
 import loadCellSets from 'redux/actions/cellSets/loadCellSets';
 
 import plotCsvFilename from 'utils/fileNames';
-import { plotNames } from 'utils/constants';
+import { plotNames, plotTypes, plotUuids } from 'utils/constants';
 import PlotContainer from 'components/plots/PlotContainer';
 
 const { Panel } = Collapse;
 
-const plotUuid = 'frequencyPlotMain';
-const plotType = 'frequency';
+const plotType = plotTypes.FREQUENCY_PLOT;
 const dataExplorationPath = '/experiments/[experimentId]/data-exploration';
 
 const FrequencyPlotPage = ({ experimentId }) => {
+  const [plotUuid, setPlotUuid] = useState(plotUuids.FREQUENCY_PLOT);
+
   const dispatch = useDispatch();
   const config = useSelector((state) => state.componentConfig[plotUuid]?.config);
   const cellSets = useSelector(getCellSets());
@@ -186,6 +187,7 @@ const FrequencyPlotPage = ({ experimentId }) => {
       <PlotContainer
         experimentId={experimentId}
         plotUuid={plotUuid}
+        setPlotUuid={setPlotUuid}
         plotType={plotType}
         plotStylingConfig={plotStylingConfig}
         extraToolbarControls={<ExportAsCSV data={csvData} filename={csvFilename} />}

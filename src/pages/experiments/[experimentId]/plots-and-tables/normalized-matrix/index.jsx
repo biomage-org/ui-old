@@ -24,13 +24,12 @@ import {
   downloadNormalizedMatrix, loadPlotConfig, updatePlotConfig,
 } from 'redux/actions/componentConfig';
 
-import { plotNames, plotTypes } from 'utils/constants';
+import { plotNames, plotTypes, plotUuids } from 'utils/constants';
 import PlatformError from 'components/PlatformError';
 import MultiSelect from 'components/MultiSelect';
 import endUserMessages from 'utils/endUserMessages';
 import useConditionalEffect from 'utils/customHooks/useConditionalEffect';
 
-const plotUuid = 'normalized-matrix';
 const plotType = plotTypes.NORMALIZED_EXPRESSION_MATRIX;
 
 const plotStylingConfig = [];
@@ -61,6 +60,8 @@ const renderDownloadNormalizedError = (configError) => {
 
 const NormalizedMatrixPage = (props) => {
   const { experimentId } = props;
+
+  const [plotUuid, setPlotUuid] = useState(plotUuids.NORMALIZED_EXPRESSION_MATRIX);
 
   const dispatch = useDispatch();
 
@@ -187,6 +188,7 @@ const NormalizedMatrixPage = (props) => {
       <PlotContainer
         experimentId={experimentId}
         plotUuid={plotUuid}
+        setPlotUuid={setPlotUuid}
         plotType={plotType}
         plotStylingConfig={plotStylingConfig}
         customControlPanel={renderControlPanel()}
@@ -201,5 +203,3 @@ NormalizedMatrixPage.propTypes = {
 };
 
 export default NormalizedMatrixPage;
-
-export { plotUuid };
