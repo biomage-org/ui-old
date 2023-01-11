@@ -40,8 +40,9 @@ const generateSpec = (config, plotData, cellSetLegendsData) => {
     //  plus 30 for the color symbol and offset
     const colorSymbolSize = 30;
     const characterSizeHorizontal = 5.5;
-    const characterSizeVertical = 16;
+    const characterSizeVertical = 11;
     const xTickSize = 140;
+
     const maxLegendItemsPerRow = Math.floor(
       (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
       / characterSizeVertical,
