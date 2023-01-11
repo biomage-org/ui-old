@@ -94,8 +94,7 @@ const ViolinIndex = ({ experimentId }) => {
 
   useEffect(() => {
     if (!multiViewConfig) {
-      const customConfig = { plotUuids: [plotUuid] };
-      loadComponent(multiViewUuid, multiViewType, false, customConfig);
+      loadComponent(multiViewUuid, multiViewType, false);
     }
   }, [plotUuid]);
 

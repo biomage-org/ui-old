@@ -11,17 +11,34 @@ import {
 import validateInputs, { rules } from 'utils/validateInputs';
 import { plotTypes } from 'utils/constants';
 import { updatePlotConfig } from 'redux/actions/componentConfig';
-import { getSavedPlots } from 'redux/selectors';
+import { getPlotConfigs, getSavedPlots } from 'redux/selectors';
 import loadConditionalComponentConfig from 'redux/actions/componentConfig/loadConditionalComponentConfig';
+import { generateMultiViewGridPlotUuid } from 'utils/generateCustomPlotUuid';
 
 const { TextArea } = Input;
 
 const savedPlotsUuid = 'savedPlots';
 
-const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
+const multiViewPlots = [plotTypes.VIOLIN_PLOT];
+
+const SavePlotModal = (props) => {
+  const {
+    experimentId,
+    config,
+    plotUuid,
+    plotType,
+    onExit,
+  } = props;
+
   const dispatch = useDispatch();
 
   const savedPlots = useSelector(getSavedPlots());
+
+  const inMultiViewPlot = multiViewPlots.includes(plotType);
+  const multiViewUuid = `multiView-${plotUuid.replace(/-\d+/, '')}`;
+  const multiViewConfig = useSelector((state) => (inMultiViewPlot ? state.componentConfig[multiViewUuid]?.config : {}));
+  const multiViewPlotUuids = multiViewConfig?.plotUuids;
+  const multiViewPlotConfigs = useSelector(getPlotConfigs(multiViewPlotUuids));
 
   const [plotNames, setPlotNames] = useState(new Set());
   const [plotName, setPlotName] = useState('');
@@ -31,7 +48,7 @@ const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
 
   const validationChecksName = [
     rules.MIN_1_CHAR,
-    rules.ALPHANUM_DASH_SPACE,
+    rules.ALPHANUM_SPACE,
     rules.UNIQUE_NAME_CASE_INSENSITIVE,
   ];
 
@@ -55,6 +72,28 @@ const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
     setValidateDesc(validateInputs(plotDescription, validationChecksDesc, {}));
   }, [plotDescription]);
 
+  const multiViewSubmit = () => {
+    const plotsCount = multiViewPlotUuids.length;
+
+    const additionalPlots = [...Array(plotsCount - 1).keys()].map((index) => generateMultiViewGridPlotUuid(plotName, index));
+
+    const newMultiViewPlotUuid = `multiView-${plotName}`;
+    const plotUuids = [plotName, ...additionalPlots];
+
+    const customConfig = {
+      ...multiViewConfig,
+      plotUuids,
+    };
+
+    console.log(customConfig);
+
+    dispatch(loadConditionalComponentConfig(experimentId, newMultiViewPlotUuid, 'multiView', true, customConfig));
+
+    Object.values(multiViewPlotConfigs).forEach((plotConfig, index) => {
+      dispatch(loadConditionalComponentConfig(experimentId, plotUuids[index], plotType, true, plotConfig));
+    });
+  };
+
   const submit = () => {
     dispatch(updatePlotConfig(
       savedPlotsUuid,
@@ -66,7 +105,11 @@ const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
       },
     ));
 
-    dispatch(loadConditionalComponentConfig(experimentId, plotName, plotType, true, config));
+    if (inMultiViewPlot) {
+      multiViewSubmit();
+    } else {
+      dispatch(loadConditionalComponentConfig(experimentId, plotName, plotType, true, config));
+    }
 
     setPlotName('');
 
@@ -160,6 +203,7 @@ const SavePlotModal = ({ experimentId, config, plotType, onExit }) => {
 SavePlotModal.propTypes = {
   experimentId: PropTypes.string.isRequired,
   config: PropTypes.object,
+  plotUuid: PropTypes.string.isRequired,
   plotType: PropTypes.string.isRequired,
   onExit: PropTypes.func.isRequired,
 };
