@@ -59,6 +59,14 @@ const HeatmapPlot = ({ experimentId }) => {
   }, []);
 
   useEffect(() => {
+    if (!cellSets.accessible) return;
+
+    if (numLegendItems > NUM_LEGEND_SHOW_LIMIT) {
+      dispatch(updatePlotConfig(plotUuid, { legend: { enabled: false } }));
+    }
+  }, [cellSets.accessible]);
+
+  useEffect(() => {
     if (!config || _.isEmpty(expressionData)) {
       return;
     }

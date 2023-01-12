@@ -62,7 +62,7 @@ const MarkerHeatmap = ({ experimentId }) => {
   ).length;
 
   const numLegendItems = hierarchy.find(
-    ({ key }) => key === config.selectedCellSet,
+    ({ key }) => key === config?.selectedCellSet,
   )?.children?.length;
 
   const loadedMarkerGenes = useSelector(
@@ -84,6 +84,14 @@ const MarkerHeatmap = ({ experimentId }) => {
     if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
     if (!hierarchy?.length) dispatch(loadCellSets(experimentId));
   }, []);
+
+  useEffect(() => {
+    if (!config?.selectedCellSet) return;
+
+    if (numLegendItems > NUM_LEGEND_SHOW_LIMIT) {
+      dispatch(updatePlotConfig(plotUuid, { legend: { enabled: false } }));
+    }
+  }, [!config?.selectedCellSet]);
 
   useEffect(() => {
     if (louvainClustersResolution && config?.nMarkerGenes && hierarchy?.length) {
