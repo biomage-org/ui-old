@@ -4,6 +4,8 @@ import {
   Skeleton,
   Empty,
   Radio,
+  Space,
+  Alert,
 } from 'antd';
 import _ from 'lodash';
 import { useSelector, useDispatch } from 'react-redux';
@@ -40,6 +42,7 @@ const { Panel } = Collapse;
 const plotUuid = 'markerHeatmapPlotMain';
 const plotType = 'markerHeatmap';
 const geneListUuid = 'geneList';
+const NUM_LEGEND_SHOW_LIMIT = 50;
 
 const MarkerHeatmap = ({ experimentId }) => {
   const dispatch = useDispatch();
@@ -57,6 +60,10 @@ const MarkerHeatmap = ({ experimentId }) => {
   const selectedCellSetClassAvailable = useSelector(
     getCellSetsHierarchyByKeys([config?.selectedCellSet]),
   ).length;
+
+  const numLegendItems = hierarchy.find(
+    ({ key }) => key === config.selectedCellSet,
+  )?.children?.length;
 
   const loadedMarkerGenes = useSelector(
     (state) => state.genes.expression.views[plotUuid]?.data,
@@ -252,6 +259,18 @@ const MarkerHeatmap = ({ experimentId }) => {
     dispatch(loadPaginatedGeneProperties(experimentId, ['dispersions'], geneListUuid, state));
   }, []);
 
+  useEffect(() => {
+    if (!config) return;
+    if (!numLegendItems) return;
+
+    dispatch(
+      updatePlotConfig(
+        plotUuid,
+        { legend: { enabled: numLegendItems < NUM_LEGEND_SHOW_LIMIT } },
+      ),
+    );
+  }, [!config]);
+
   const treeScrollable = document.getElementById('ScrollWrapper');
 
   useEffect(() => {
@@ -446,7 +465,31 @@ const MarkerHeatmap = ({ experimentId }) => {
     }
 
     if (vegaSpec) {
-      return <Vega spec={vegaSpec} renderer='webgl' />;
+      return (
+        <center>
+          <Space direction='vertical'>
+            {numLegendItems > NUM_LEGEND_SHOW_LIMIT && (
+              <Alert
+                message={(
+                  <p>
+                    {`The plot legend contains ${numLegendItems} items, making the legend very large.`}
+                    <br />
+                    We have hidden the plot legend to not interfere with the display of the plot.
+                    <br />
+                    You can display the plot legend, by changing the settings under
+                    {' '}
+                    <b>Legend &gt; Toggle Legend</b>
+                    .
+                  </p>
+                )}
+                type='warning'
+              />
+            ) }
+            <Vega spec={vegaSpec} renderer='webgl' />
+          </Space>
+        </center>
+
+      );
     }
   };
 

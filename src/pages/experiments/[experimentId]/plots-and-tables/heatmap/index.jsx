@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import {
-  Skeleton, Empty, Collapse, Space, Select, Button,
+  Skeleton,
+  Empty,
+  Collapse,
+  Space,
+  Select,
+  Button,
+  Alert,
 } from 'antd';
 import _ from 'lodash';
 import 'vega-webgl-renderer';
@@ -29,6 +35,7 @@ const { Panel } = Collapse;
 
 const plotUuid = 'heatmapPlotMain';
 const plotType = 'heatmap';
+const NUM_LEGEND_SHOW_LIMIT = 50;
 
 const HeatmapPlot = ({ experimentId }) => {
   const dispatch = useDispatch();
@@ -39,6 +46,12 @@ const HeatmapPlot = ({ experimentId }) => {
   const selectedGenes = useSelector((state) => state.genes.expression.views[plotUuid]?.data) || [];
   const [vegaSpec, setVegaSpec] = useState();
   const displaySavedGenes = useRef(true);
+
+  const { hierarchy } = cellSets;
+
+  const numLegendItems = hierarchy.find(
+    ({ key }) => key === config?.selectedCellSet,
+  )?.children?.length;
 
   useEffect(() => {
     if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
@@ -225,7 +238,30 @@ const HeatmapPlot = ({ experimentId }) => {
     }
 
     if (vegaSpec) {
-      return <Vega spec={vegaSpec} renderer='webgl' />;
+      return (
+        <center>
+          <Space direction='vertical'>
+            {numLegendItems > NUM_LEGEND_SHOW_LIMIT && (
+              <Alert
+                message={(
+                  <p>
+                    {`The plot legend contains ${numLegendItems} items, making the legend very large.`}
+                    <br />
+                    We have hidden the plot legend to not interfere with the display of the plot.
+                    <br />
+                    You can display the plot legend, by changing the settings under
+                    {' '}
+                    <b>Legend &gt; Toggle Legend</b>
+                    .
+                  </p>
+                )}
+                type='warning'
+              />
+            )}
+            <Vega spec={vegaSpec} renderer='webgl' />
+          </Space>
+        </center>
+      );
     }
   };
 

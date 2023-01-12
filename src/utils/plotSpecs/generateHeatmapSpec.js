@@ -1,16 +1,6 @@
 const generateSpec = (config, groupName, data, displayLabels = true) => {
   const cellSetNames = data.trackGroupData.map(({ name }) => name);
 
-  const PADDING_SIZE = 5;
-  const characterSizeVertical = 14;
-  const xTickSize = 140;
-
-  const maxLegendItemsPerCol = Math.floor(
-    (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
-      / characterSizeVertical,
-  );
-
-  const verticalLegendColumns = Math.ceil(cellSetNames.length / maxLegendItemsPerCol);
   const extraLabels = displayLabels ? [
     {
       domain: false,
@@ -23,13 +13,37 @@ const generateSpec = (config, groupName, data, displayLabels = true) => {
     ? { orient: 'left' }
     : { orient: 'bottom', direction: 'horizontal' };
 
-  let legend = [
+  const legend = [
     {
+      fill: 'color',
+      type: 'gradient',
+      title: ['Intensity'],
+      labelFont: config.fontStyle.font,
+      titleFont: config.fontStyle.font,
+      gradientLength: { signal: 'width' },
+      labelSeparation: { signal: 'width' },
+      ...orientation,
+    },
+  ];
+
+  if (config.legend.enabled) {
+    const PADDING_SIZE = 5;
+    const characterSizeVertical = 14;
+    const xTickSize = 140;
+
+    const maxLegendItemsPerCol = Math.floor(
+      (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
+      / characterSizeVertical,
+    );
+
+    const numVerticalLegendColumns = Math.ceil(cellSetNames.length / maxLegendItemsPerCol);
+
+    legend.push({
       fill: 'cellSetColors',
       title: groupName,
       type: 'symbol',
       orient: 'right',
-      columns: verticalLegendColumns,
+      columns: numVerticalLegendColumns,
       direction: 'vertical',
       offset: 40,
       symbolType: 'square',
@@ -44,22 +58,7 @@ const generateSpec = (config, groupName, data, displayLabels = true) => {
       labelFont: config.fontStyle.font,
       titleFont: config.fontStyle.font,
       symbolLimit: 0,
-    },
-    {
-      fill: 'color',
-      type: 'gradient',
-      title: ['Intensity'],
-      labelFont: config.fontStyle.font,
-      titleFont: config.fontStyle.font,
-      gradientLength: { signal: 'width' },
-      labelSeparation: { signal: 'width' },
-      ...orientation,
-    },
-
-  ];
-
-  if (!config.legend.enabled) {
-    legend = null;
+    });
   }
 
   return {
