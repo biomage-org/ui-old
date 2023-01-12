@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 import {
-  Row, Col, PageHeader, Radio, Collapse, Empty, Alert,
+  Row, Col, PageHeader, Radio, Collapse, Empty, Alert, Space,
 } from 'antd';
 import SelectData from 'components/plots/styling/embedding-continuous/SelectData';
 
@@ -30,17 +30,23 @@ const { Panel } = Collapse;
 const ConfigureEmbedding = (props) => {
   const { experimentId, onConfigChange } = props;
   const [plot, setPlot] = useState(null);
-  const filterName = 'configureEmbedding';
-  const cellSets = useSelector(getCellSets());
-  const cellMeta = useSelector((state) => state.cellMeta);
-  const [selectedPlot, setSelectedPlot] = useState('cellCluster');
-
   const dispatch = useDispatch();
   const debounceSave = useCallback(
     _.debounce((plotUuid) => dispatch(savePlotConfig(experimentId, plotUuid)), 2000), [],
   );
 
+  const filterName = 'configureEmbedding';
+  const NUM_LEGEND_SHOW_LIMIT = 50;
+
+  const cellSets = useSelector(getCellSets());
+  const cellMeta = useSelector((state) => state.cellMeta);
+  const [selectedPlot, setSelectedPlot] = useState('cellCluster');
+
   const continuousEmbeddingPlots = ['mitochondrialContent', 'doubletScores', 'numOfGenes', 'numOfUmis'];
+
+  const { hierarchy } = cellSets;
+  const numSamples = hierarchy.find(({ key }) => key === 'sample').children.length;
+  const numCellSets = hierarchy.find(({ key }) => key === 'louvain').children.length;
 
   useEffect(() => {
     continuousEmbeddingPlots.forEach((dataName) => {
@@ -56,12 +62,33 @@ const ConfigureEmbedding = (props) => {
       plotUuid: generateDataProcessingPlotUuid(null, filterName, 0),
       plotType: 'embeddingPreviewByCellSets',
       plot: (config, actions) => (
-        <CategoricalEmbeddingPlot
-          experimentId={experimentId}
-          config={config}
-          actions={actions}
-          onUpdate={updatePlotWithChanges}
-        />
+        <center>
+          <Space direction='vertical'>
+            {numCellSets > NUM_LEGEND_SHOW_LIMIT && (
+              <Alert
+                message={(
+                  <p>
+                    {`The plot legend contains ${numCellSets} items, making the legend very large.`}
+                    <br />
+                    We have hidden the plot legend to not interfere with the display of the plot.
+                    <br />
+                    You can display the plot legend, by changing the settings under
+                    {' '}
+                    <b>Legend &gt; Toggle Legend</b>
+                    .
+                  </p>
+                )}
+                type='warning'
+              />
+            )}
+            <CategoricalEmbeddingPlot
+              experimentId={experimentId}
+              config={config}
+              actions={actions}
+              onUpdate={updatePlotWithChanges}
+            />
+          </Space>
+        </center>
       )
       ,
     },
@@ -70,19 +97,43 @@ const ConfigureEmbedding = (props) => {
       plotUuid: generateDataProcessingPlotUuid(null, filterName, 1),
       plotType: 'embeddingPreviewBySample',
       plot: (config, actions) => (
-        <CategoricalEmbeddingPlot
-          experimentId={experimentId}
-          config={{
-            ...config,
-            legend: {
-              ...config.legend,
-              title: 'Sample Name',
-            },
-            selectedCellSet: 'sample',
-          }}
-          actions={actions}
-          onUpdate={updatePlotWithChanges}
-        />
+        <center>
+          <Space direction='vertical'>
+            {numSamples > NUM_LEGEND_SHOW_LIMIT && (
+              <Alert
+                message={(
+                  <p>
+                    {`The plot legend contains ${numSamples} items, making the legend very large.`}
+                    <br />
+                    We have hidden the plot legend to not interfere with the display of the plot.
+                    <br />
+                    You can display the plot legend, by changing the settings under
+                    {' '}
+                    <b>Legend &gt; Toggle Legend</b>
+                    .
+                  </p>
+                )}
+                type='warning'
+              />
+            )}
+            <CategoricalEmbeddingPlot
+              experimentId={experimentId}
+              config={{
+                ...config,
+                legend: {
+                  ...config.legend,
+                  title: 'Sample Name',
+                },
+                selectedCellSet: 'sample',
+                axes: {
+                  defaultValues: [],
+                },
+              }}
+              actions={actions}
+              onUpdate={updatePlotWithChanges}
+            />
+          </Space>
+        </center>
       ),
     },
     mitochondrialContent: {
@@ -254,9 +305,19 @@ const ConfigureEmbedding = (props) => {
   const selectedConfig = plotConfigs[plots[selectedPlot].plotUuid];
 
   useEffect(() => {
-    Object.values(plots).forEach((obj) => {
+    const promiseLoadConfig = Object.values(plots).map(async (obj) => {
       if (!plotConfigs[obj.plotUuid]) {
-        dispatch(loadPlotConfig(experimentId, obj.plotUuid, obj.plotType));
+        await dispatch(loadPlotConfig(experimentId, obj.plotUuid, obj.plotType));
+      }
+    });
+
+    Promise.all(promiseLoadConfig).then(() => {
+      if (numCellSets > NUM_LEGEND_SHOW_LIMIT) {
+        dispatch(updatePlotConfig(plots.cellCluster.plotUuid, { legend: { enabled: false } }));
+      }
+
+      if (numSamples > NUM_LEGEND_SHOW_LIMIT) {
+        dispatch(updatePlotConfig(plots.sample.plotUuid, { legend: { enabled: false } }));
       }
     });
   }, []);

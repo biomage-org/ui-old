@@ -33,15 +33,15 @@ const DataIntegration = (props) => {
   const [selectedPlot, setSelectedPlot] = useState('embedding');
   const [plot, setPlot] = useState(null);
   const cellSets = useSelector(getCellSets());
+
   const filterName = 'dataIntegration';
   const configureEmbeddingFilterName = 'configureEmbedding';
+  const NUM_LEGEND_SHOW_LIMIT = 50;
 
   const dispatch = useDispatch();
   const debounceSave = useCallback(
     _.debounce((plotUuid) => dispatch(savePlotConfig(experimentId, plotUuid)), 2000), [],
   );
-
-  const NUM_LEGEND_SHOW_LIMIT = 1;
 
   const { hierarchy } = cellSets;
   const numSamples = hierarchy.find(({ key }) => key === 'sample').children.length;
@@ -259,16 +259,18 @@ const DataIntegration = (props) => {
   }, [completedSteps]);
 
   useEffect(() => {
-    Object.values(plots).forEach((obj) => {
+    const loadConfigPromises = Object.values(plots).map(async (obj) => {
       if (!plotConfigs[obj.plotUuid]) {
-        dispatch(loadPlotConfig(experimentId, obj.plotUuid, obj.plotType));
+        await dispatch(loadPlotConfig(experimentId, obj.plotUuid, obj.plotType));
       }
     });
 
-    if (numSamples > NUM_LEGEND_SHOW_LIMIT) {
-      dispatch(updatePlotConfig(plots.embedding.plotUuid, { legend: { enabled: false } }));
-      dispatch(updatePlotConfig(plots.frequency.plotUuid, { legend: { enabled: false } }));
-    }
+    Promise.all(loadConfigPromises).then(() => {
+      if (numSamples > NUM_LEGEND_SHOW_LIMIT) {
+        dispatch(updatePlotConfig(plots.embedding.plotUuid, { legend: { enabled: false } }));
+        dispatch(updatePlotConfig(plots.frequency.plotUuid, { legend: { enabled: false } }));
+      }
+    });
   }, []);
 
   useEffect(() => {
