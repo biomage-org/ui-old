@@ -8,6 +8,7 @@ import {
   Skeleton,
   Radio,
   Alert,
+  Space,
 } from 'antd';
 import Link from 'next/link';
 
@@ -32,6 +33,7 @@ const { Panel } = Collapse;
 const plotUuid = 'frequencyPlotMain';
 const plotType = 'frequency';
 const dataExplorationPath = '/experiments/[experimentId]/data-exploration';
+const NUM_LEGEND_SHOW_LIMIT = 50;
 
 const FrequencyPlotPage = ({ experimentId }) => {
   const dispatch = useDispatch();
@@ -46,11 +48,24 @@ const FrequencyPlotPage = ({ experimentId }) => {
 
   const [csvData, setCsvData] = useState([]);
   const [csvFilename, setCsvFilename] = useState('');
+  const numLegendItems = cellSetClusters?.children?.length;
 
   useEffect(() => {
     if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
     dispatch(loadCellSets(experimentId));
   }, []);
+
+  useEffect(() => {
+    if (!config) return;
+    if (!numLegendItems) return;
+
+    dispatch(
+      updatePlotConfig(
+        plotUuid,
+        { legend: { enabled: numLegendItems < NUM_LEGEND_SHOW_LIMIT } },
+      ),
+    );
+  }, [!config]);
 
   const plotStylingConfig = [
     {
@@ -171,11 +186,30 @@ const FrequencyPlotPage = ({ experimentId }) => {
 
     return (
       <center>
-        <FrequencyPlot
-          experimentId={experimentId}
-          config={config}
-          formatCSVData={formatCSVData}
-        />
+        <Space direction='vertical'>
+          {numLegendItems > NUM_LEGEND_SHOW_LIMIT && (
+            <Alert
+              message={(
+                <p>
+                  {`The plot legend contains ${numLegendItems} items, making the legend very large.`}
+                  <br />
+                  We have hidden the plot legend to not interfere with the display of the plot.
+                  <br />
+                  You can display the plot legend, by changing the settings under
+                  {' '}
+                  <b>Legend &gt; Toggle Legend</b>
+                  .
+                </p>
+              )}
+              type='warning'
+            />
+          ) }
+          <FrequencyPlot
+            experimentId={experimentId}
+            config={config}
+            formatCSVData={formatCSVData}
+          />
+        </Space>
       </center>
     );
   };

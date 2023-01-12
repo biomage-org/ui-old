@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
-  Row, Col, Radio, PageHeader, Collapse, Alert, Empty,
+  Row, Col, Radio, PageHeader, Collapse, Alert, Empty, Space,
 } from 'antd';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
@@ -41,6 +41,11 @@ const DataIntegration = (props) => {
     _.debounce((plotUuid) => dispatch(savePlotConfig(experimentId, plotUuid)), 2000), [],
   );
 
+  const NUM_LEGEND_SHOW_LIMIT = 50;
+
+  const { hierarchy } = cellSets;
+  const numSamples = hierarchy.find(({ key }) => key === 'sample').children.length;
+
   const [plots] = useState({
     embedding: {
       title: 'Embedding coloured by sample',
@@ -71,11 +76,32 @@ const DataIntegration = (props) => {
       plotUuid: 'dataIntegrationFrequency',
       plotType: 'dataIntegrationFrequency',
       plot: (config, plotData, actions) => (
-        <FrequencyPlot
-          experimentId={experimentId}
-          config={config}
-          actions={actions}
-        />
+        <center>
+          <Space direction='vertical'>
+            {numSamples > NUM_LEGEND_SHOW_LIMIT && (
+              <Alert
+                message={(
+                  <p>
+                    {`The plot legend contains ${numSamples} items, making the legend very large.`}
+                    <br />
+                    We have hidden the plot legend to not interfere with the display of the plot.
+                    <br />
+                    You can display the plot legend, by changing the settings under
+                    {' '}
+                    <b>Legend &gt; Toggle Legend</b>
+                    .
+                  </p>
+                )}
+                type='warning'
+              />
+            )}
+            <FrequencyPlot
+              experimentId={experimentId}
+              config={config}
+              actions={actions}
+            />
+          </Space>
+        </center>
       ),
       blockedByConfigureEmbedding: true,
     },
@@ -217,6 +243,10 @@ const DataIntegration = (props) => {
         dispatch(loadPlotConfig(experimentId, obj.plotUuid, obj.plotType));
       }
     });
+
+    if (numSamples > NUM_LEGEND_SHOW_LIMIT) {
+      dispatch(updatePlotConfig(plots.frequency.plotUuid, { legend: { enabled: false } }));
+    }
   }, []);
 
   useEffect(() => {
@@ -284,9 +314,7 @@ const DataIntegration = (props) => {
       />
       <Row gutter={16}>
         <Col flex='auto'>
-          <center>
-            {renderPlot()}
-          </center>
+          {renderPlot()}
         </Col>
 
         <Col flex='1 0px'>
