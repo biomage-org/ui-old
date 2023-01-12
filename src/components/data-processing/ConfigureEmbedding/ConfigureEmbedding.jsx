@@ -314,13 +314,17 @@ const ConfigureEmbedding = (props) => {
     Promise.all(promiseLoadConfig).then(() => {
       if (numCellSets > NUM_LEGEND_SHOW_LIMIT) {
         dispatch(updatePlotConfig(plots.cellCluster.plotUuid, { legend: { enabled: false } }));
+      } else {
+        dispatch(updatePlotConfig(plots.cellCluster.plotUuid, { legend: { enabled: true } }));
       }
 
       if (numSamples > NUM_LEGEND_SHOW_LIMIT) {
         dispatch(updatePlotConfig(plots.sample.plotUuid, { legend: { enabled: false } }));
+      } else {
+        dispatch(updatePlotConfig(plots.sample.plotUuid, { legend: { enabled: true } }));
       }
     });
-  }, []);
+  }, [numSamples, numCellSets]);
 
   useEffect(() => {
     // if we change a plot and the config is not saved yet
