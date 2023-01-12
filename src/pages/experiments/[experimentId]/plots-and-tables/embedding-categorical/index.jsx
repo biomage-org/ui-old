@@ -4,6 +4,8 @@ import {
   Collapse,
   Select,
   Skeleton,
+  Space,
+  Alert,
 } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import PropTypes from 'prop-types';
@@ -23,12 +25,17 @@ const { Panel } = Collapse;
 
 const plotUuid = 'embeddingCategoricalMain';
 const plotType = 'embeddingCategorical';
+const NUM_LEGEND_SHOW_LIMIT = 50;
 
 const EmbeddingCategoricalPage = ({ experimentId }) => {
   const dispatch = useDispatch();
   const config = useSelector((state) => state.componentConfig[plotUuid]?.config);
   const cellSets = useSelector(getCellSets());
   const hierarchy = useSelector(getCellSetsHierarchy());
+
+  const numLegendItems = hierarchy.find(
+    ({ key }) => key === config.selectedCellSet,
+  )?.children?.length;
 
   useEffect(() => {
     if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
@@ -48,6 +55,18 @@ const EmbeddingCategoricalPage = ({ experimentId }) => {
   const updatePlotWithChanges = (obj) => {
     dispatch(updatePlotConfig(plotUuid, obj));
   };
+
+  useEffect(() => {
+    if (!config) return;
+    if (!numLegendItems) return;
+
+    dispatch(
+      updatePlotConfig(
+        plotUuid,
+        { legend: { enabled: numLegendItems < NUM_LEGEND_SHOW_LIMIT } },
+      ),
+    );
+  }, [!config]);
 
   const plotStylingConfig = [
     {
@@ -132,12 +151,33 @@ const EmbeddingCategoricalPage = ({ experimentId }) => {
         extraControlPanels={renderExtraPanels()}
         defaultActiveKey='group-by'
       >
-        <CategoricalEmbeddingPlot
-          experimentId={experimentId}
-          config={config}
-          plotUuid={plotUuid}
-          onUpdate={updatePlotWithChanges}
-        />
+        <center>
+          <Space direction='vertical'>
+            {numLegendItems > NUM_LEGEND_SHOW_LIMIT && (
+              <Alert
+                message={(
+                  <p>
+                    {`The plot legend contains ${numLegendItems} items, making the legend very large.`}
+                    <br />
+                    We have hidden the plot legend to not interfere with the display of the plot.
+                    <br />
+                    You can display the plot legend, by changing the settings under
+                    {' '}
+                    <b>Legend &gt; Toggle Legend</b>
+                    .
+                  </p>
+                )}
+                type='warning'
+              />
+            )}
+            <CategoricalEmbeddingPlot
+              experimentId={experimentId}
+              config={config}
+              plotUuid={plotUuid}
+              onUpdate={updatePlotWithChanges}
+            />
+          </Space>
+        </center>
       </PlotContainer>
     </>
   );
