@@ -41,7 +41,7 @@ const DataIntegration = (props) => {
     _.debounce((plotUuid) => dispatch(savePlotConfig(experimentId, plotUuid)), 2000), [],
   );
 
-  const NUM_LEGEND_SHOW_LIMIT = 50;
+  const NUM_LEGEND_SHOW_LIMIT = 1;
 
   const { hierarchy } = cellSets;
   const numSamples = hierarchy.find(({ key }) => key === 'sample').children.length;
@@ -52,22 +52,43 @@ const DataIntegration = (props) => {
       plotUuid: generateDataProcessingPlotUuid(null, configureEmbeddingFilterName, 1),
       plotType: 'dataIntegrationEmbedding',
       plot: (config, plotData, actions) => (
-        <CategoricalEmbeddingPlot
-          experimentId={experimentId}
-          config={{
-            ...config,
-            legend: {
-              ...config.legend,
-              title: 'Sample Name',
-            },
-            selectedCellSet: 'sample',
-            axes: {
-              defaultValues: [],
-            },
-          }}
-          actions={actions}
-          onUpdate={updatePlotWithChanges}
-        />
+        <center>
+          <Space direction='vertical'>
+            {numSamples > NUM_LEGEND_SHOW_LIMIT && (
+              <Alert
+                message={(
+                  <p>
+                    {`The plot legend contains ${numSamples} items, making the legend very large.`}
+                    <br />
+                    We have hidden the plot legend to not interfere with the display of the plot.
+                    <br />
+                    You can display the plot legend, by changing the settings under
+                    {' '}
+                    <b>Legend &gt; Toggle Legend</b>
+                    .
+                  </p>
+                )}
+                type='warning'
+              />
+            )}
+            <CategoricalEmbeddingPlot
+              experimentId={experimentId}
+              config={{
+                ...config,
+                legend: {
+                  ...config.legend,
+                  title: 'Sample Name',
+                },
+                selectedCellSet: 'sample',
+                axes: {
+                  defaultValues: [],
+                },
+              }}
+              actions={actions}
+              onUpdate={updatePlotWithChanges}
+            />
+          </Space>
+        </center>
       ),
       blockedByConfigureEmbedding: true,
     },
@@ -245,6 +266,7 @@ const DataIntegration = (props) => {
     });
 
     if (numSamples > NUM_LEGEND_SHOW_LIMIT) {
+      dispatch(updatePlotConfig(plots.embedding.plotUuid, { legend: { enabled: false } }));
       dispatch(updatePlotConfig(plots.frequency.plotUuid, { legend: { enabled: false } }));
     }
   }, []);
