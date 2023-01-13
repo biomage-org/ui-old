@@ -69,6 +69,17 @@ const HeatmapPlot = ({ experimentId }) => {
   }, [config]);
 
   useEffect(() => {
+    if (!config) {
+      return;
+    }
+
+    // grouping and metadata tracks should change when data is changed
+    updatePlotWithChanges(
+      { selectedTracks: [config.selectedCellSet], groupedTracks: [config.selectedCellSet] },
+    );
+  }, [config?.selectedCellSet]);
+
+  useEffect(() => {
     if (!config || _.isEmpty(expressionData)) {
       return;
     }
