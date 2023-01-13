@@ -173,6 +173,7 @@ const FrequencyPlotPage = ({ experimentId }) => {
 
     return (
       <PlotLegendAlert
+        isLegendEnabled={config.legend.enabled}
         numLegendItems={numLegendItems}
         updateFn={updatePlotWithChanges}
       >

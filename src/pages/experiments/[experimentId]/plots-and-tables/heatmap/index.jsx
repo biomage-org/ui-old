@@ -250,6 +250,7 @@ const HeatmapPlot = ({ experimentId }) => {
     if (vegaSpec) {
       return (
         <PlotLegendAlert
+          isLegendEnabled={config.legend.enabled}
           numLegendItems={numLegendItems}
           updateFn={updatePlotWithChanges}
         >

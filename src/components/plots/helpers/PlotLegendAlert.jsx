@@ -9,11 +9,13 @@ const NUM_LEGEND_ITEMS_LIMIT = 50;
 
 const PlotLegendAlert = (props) => {
   const {
-    numLegendItems, updateFn, children,
+    isLegendEnabled, numLegendItems, updateFn, children,
   } = props;
 
   useEffect(() => {
-    updateFn({ legend: { enabled: numLegendItems < NUM_LEGEND_ITEMS_LIMIT } });
+    const shouldShowLegend = numLegendItems < NUM_LEGEND_ITEMS_LIMIT;
+
+    if (isLegendEnabled !== shouldShowLegend) updateFn({ legend: { enabled: shouldShowLegend } });
   }, [numLegendItems]);
 
   return (
@@ -44,12 +46,14 @@ const PlotLegendAlert = (props) => {
 
 PlotLegendAlert.propTypes = {
   numLegendItems: PropTypes.number,
+  isLegendEnabled: PropTypes.bool,
   children: PropTypes.node,
   updateFn: PropTypes.func.isRequired,
 };
 
 PlotLegendAlert.defaultProps = {
   numLegendItems: 0,
+  isLegendEnabled: true,
   children: null,
 };
 

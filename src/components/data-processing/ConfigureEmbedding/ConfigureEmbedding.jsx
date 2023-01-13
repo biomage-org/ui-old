@@ -63,6 +63,7 @@ const ConfigureEmbedding = (props) => {
       plotType: 'embeddingPreviewByCellSets',
       plot: (config, actions) => (
         <PlotLegendAlert
+          isLegendEnabled={config.legend.enabled}
           numLegendItems={numCellSets}
           updateFn={updatePlotWithChanges}
         >
@@ -82,6 +83,7 @@ const ConfigureEmbedding = (props) => {
       plotType: 'embeddingPreviewBySample',
       plot: (config, actions) => (
         <PlotLegendAlert
+          isLegendEnabled={config.legend.enabled}
           numLegendItems={numSamples}
           updateFn={updatePlotWithChanges}
         >

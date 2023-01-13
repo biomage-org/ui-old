@@ -53,6 +53,7 @@ const DataIntegration = (props) => {
       plotType: 'dataIntegrationEmbedding',
       plot: (config, plotData, actions) => (
         <PlotLegendAlert
+          isLegendEnabled={config.legend.enabled}
           numLegendItems={numSamples}
           updateFn={updatePlotWithChanges}
         >
@@ -82,6 +83,7 @@ const DataIntegration = (props) => {
       plotType: 'dataIntegrationFrequency',
       plot: (config, plotData, actions) => (
         <PlotLegendAlert
+          isLegendEnabled={config.legend.enabled}
           numLegendItems={numSamples}
           updateFn={updatePlotWithChanges}
         >
