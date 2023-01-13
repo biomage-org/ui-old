@@ -17,6 +17,7 @@ import PropTypes from 'prop-types';
 import { updatePlotConfig, loadPlotConfig } from 'redux/actions/componentConfig';
 import Header from 'components/Header';
 import PlotContainer from 'components/plots/PlotContainer';
+import PlotLegendAlert from 'components/plots/helpers/PlotLegendAlert';
 import { generateSpec } from 'utils/plotSpecs/generateHeatmapSpec';
 import { loadGeneExpression } from 'redux/actions/genes';
 import { loadCellSets } from 'redux/actions/cellSets';
@@ -35,7 +36,6 @@ const { Panel } = Collapse;
 
 const plotUuid = 'heatmapPlotMain';
 const plotType = 'heatmap';
-const NUM_LEGEND_SHOW_LIMIT = 50;
 
 const HeatmapPlot = ({ experimentId }) => {
   const dispatch = useDispatch();
@@ -57,14 +57,6 @@ const HeatmapPlot = ({ experimentId }) => {
     if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
     dispatch(loadCellSets(experimentId));
   }, []);
-
-  useEffect(() => {
-    if (!cellSets.accessible) return;
-
-    if (numLegendItems > NUM_LEGEND_SHOW_LIMIT) {
-      dispatch(updatePlotConfig(plotUuid, { legend: { enabled: false } }));
-    }
-  }, [cellSets.accessible]);
 
   useEffect(() => {
     if (!config || _.isEmpty(expressionData)) {
@@ -247,28 +239,12 @@ const HeatmapPlot = ({ experimentId }) => {
 
     if (vegaSpec) {
       return (
-        <center>
-          <Space direction='vertical'>
-            {numLegendItems > NUM_LEGEND_SHOW_LIMIT && (
-              <Alert
-                message={(
-                  <p>
-                    {`The plot legend contains ${numLegendItems} items, making the legend very large.`}
-                    <br />
-                    We have hidden the plot legend to not interfere with the display of the plot.
-                    <br />
-                    You can display the plot legend, by changing the settings under
-                    {' '}
-                    <b>Legend &gt; Toggle Legend</b>
-                    .
-                  </p>
-                )}
-                type='warning'
-              />
-            )}
-            <Vega spec={vegaSpec} renderer='webgl' />
-          </Space>
-        </center>
+        <PlotLegendAlert
+          numLegendItems={numLegendItems}
+          updateFn={updatePlotWithChanges}
+        >
+          <Vega spec={vegaSpec} renderer='webgl' />
+        </PlotLegendAlert>
       );
     }
   };
