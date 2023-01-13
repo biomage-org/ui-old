@@ -221,6 +221,7 @@ describe('Heatmap plot', () => {
     // 2 calls:
     // 1 for the selected gene (loadGeneExpression)
     // 1 for changing the cell set
-    expect(updatePlotConfig).toHaveBeenCalledTimes(2);
+    // 1 for updating the legend visbility
+    expect(updatePlotConfig).toHaveBeenCalledTimes(3);
   });
 });
