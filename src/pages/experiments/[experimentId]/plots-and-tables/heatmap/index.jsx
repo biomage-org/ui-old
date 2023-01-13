@@ -6,7 +6,6 @@ import {
   Space,
   Select,
   Button,
-  Alert,
 } from 'antd';
 import _ from 'lodash';
 import 'vega-webgl-renderer';
