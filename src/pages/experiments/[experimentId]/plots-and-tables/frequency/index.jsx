@@ -8,7 +8,6 @@ import {
   Skeleton,
   Radio,
   Alert,
-  Space,
 } from 'antd';
 import Link from 'next/link';
 
@@ -27,13 +26,13 @@ import loadCellSets from 'redux/actions/cellSets/loadCellSets';
 import plotCsvFilename from 'utils/fileNames';
 import { plotNames } from 'utils/constants';
 import PlotContainer from 'components/plots/PlotContainer';
+import PlotLegendAlert from 'components/plots/helpers/PlotLegendAlert';
 
 const { Panel } = Collapse;
 
 const plotUuid = 'frequencyPlotMain';
 const plotType = 'frequency';
 const dataExplorationPath = '/experiments/[experimentId]/data-exploration';
-const NUM_LEGEND_SHOW_LIMIT = 50;
 
 const FrequencyPlotPage = ({ experimentId }) => {
   const dispatch = useDispatch();
@@ -54,18 +53,6 @@ const FrequencyPlotPage = ({ experimentId }) => {
     if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
     dispatch(loadCellSets(experimentId));
   }, []);
-
-  useEffect(() => {
-    if (!config) return;
-    if (!numLegendItems) return;
-
-    dispatch(
-      updatePlotConfig(
-        plotUuid,
-        { legend: { enabled: numLegendItems < NUM_LEGEND_SHOW_LIMIT } },
-      ),
-    );
-  }, [!config]);
 
   const plotStylingConfig = [
     {
@@ -185,32 +172,16 @@ const FrequencyPlotPage = ({ experimentId }) => {
     }
 
     return (
-      <center>
-        <Space direction='vertical'>
-          {numLegendItems > NUM_LEGEND_SHOW_LIMIT && (
-            <Alert
-              message={(
-                <p>
-                  {`The plot legend contains ${numLegendItems} items, making the legend very large.`}
-                  <br />
-                  We have hidden the plot legend to not interfere with the display of the plot.
-                  <br />
-                  You can display the plot legend, by changing the settings under
-                  {' '}
-                  <b>Legend &gt; Toggle Legend</b>
-                  .
-                </p>
-              )}
-              type='warning'
-            />
-          ) }
-          <FrequencyPlot
-            experimentId={experimentId}
-            config={config}
-            formatCSVData={formatCSVData}
-          />
-        </Space>
-      </center>
+      <PlotLegendAlert
+        numLegendItems={numLegendItems}
+        updateFn={updatePlotWithChanges}
+      >
+        <FrequencyPlot
+          experimentId={experimentId}
+          config={config}
+          formatCSVData={formatCSVData}
+        />
+      </PlotLegendAlert>
     );
   };
 
