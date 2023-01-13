@@ -26,6 +26,7 @@ import PlatformError from 'components/PlatformError';
 import { plotNames, plotTypes } from 'utils/constants';
 import useConditionalEffect from 'utils/customHooks/useConditionalEffect';
 import updateTrajectoryPlotSelectedNodes from 'redux/actions/componentConfig/updateTrajectoryPlotSelectedNodes';
+import PlotLegendAlert from 'components/plots/helpers/PlotLegendAlert';
 import TrajectoryAnalysisNodeSelector from './TrajectoryAnalysisNodeSelector';
 import TrajectoryAnalysisDisplaySettings from './TrajectoryAnalysisDisplaySettings';
 
@@ -54,11 +55,18 @@ const TrajectoryAnalysisPage = ({ experimentId }) => {
   const plotLoading = useSelector((state) => state.componentConfig[plotUuid]?.loading);
   const plotDataError = useSelector((state) => state.componentConfig[plotUuid]?.error);
   const configIsLoaded = useSelector((state) => !_.isNil(state.componentConfig[plotUuid]));
+  const legendEnabled = useSelector(
+    (state) => (state.componentConfig[plotUuid]?.config?.legend?.enabled),
+  );
 
   const embeddingSettings = useSelector(
     (state) => state.experimentSettings.originalProcessing
       ?.configureEmbedding?.embeddingSettings,
   );
+
+  const numLegendItems = cellSets.hierarchy.find(
+    ({ key }) => key === 'louvain',
+  )?.children?.length;
 
   const {
     data: embeddingData,
@@ -192,18 +200,24 @@ const TrajectoryAnalysisPage = ({ experimentId }) => {
     }
 
     return (
-      <TrajectoryAnalysisPlot
-        ref={resetZoomRef}
-        experimentId={experimentId}
-        plotUuid={plotUuid}
-        onUpdate={updatePlotWithChanges}
-        displaySettings={displaySettings}
-        plotLoading={plotLoading}
-        plotDataError={plotDataError}
-        onClickNode={handleClickNode}
-        onLassoSelection={handleLassoSelection}
-        actions={{ export: true, editor: false, source: false }}
-      />
+      <PlotLegendAlert
+        isLegendEnabled={legendEnabled}
+        numLegendItems={numLegendItems}
+        updateFn={updatePlotWithChanges}
+      >
+        <TrajectoryAnalysisPlot
+          ref={resetZoomRef}
+          experimentId={experimentId}
+          plotUuid={plotUuid}
+          onUpdate={updatePlotWithChanges}
+          displaySettings={displaySettings}
+          plotLoading={plotLoading}
+          plotDataError={plotDataError}
+          onClickNode={handleClickNode}
+          onLassoSelection={handleLassoSelection}
+          actions={{ export: true, editor: false, source: false }}
+        />
+      </PlotLegendAlert>
     );
   };
 
