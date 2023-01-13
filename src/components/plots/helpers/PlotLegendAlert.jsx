@@ -13,9 +13,7 @@ const PlotLegendAlert = (props) => {
   } = props;
 
   useEffect(() => {
-    if (numLegendItems > NUM_LEGEND_ITEMS_LIMIT) {
-      updateFn({ legend: { enabled: numLegendItems < NUM_LEGEND_ITEMS_LIMIT } });
-    }
+    updateFn({ legend: { enabled: numLegendItems < NUM_LEGEND_ITEMS_LIMIT } });
   }, [numLegendItems]);
 
   return (
