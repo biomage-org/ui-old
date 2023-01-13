@@ -27,7 +27,7 @@ const PlotLegendAlert = (props) => {
               <p>
                 {`The plot legend contains ${numLegendItems} items, making the legend very large.`}
                 <br />
-                We have hidden the plot legend to not interfere with the display of the plot.
+                The plot legend is hidden to not interfere with the display of the plot.
                 <br />
                 You can display the plot legend, by changing the settings under
                 {' '}
