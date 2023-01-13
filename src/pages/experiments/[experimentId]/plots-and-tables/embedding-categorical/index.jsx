@@ -138,7 +138,7 @@ const EmbeddingCategoricalPage = ({ experimentId }) => {
         defaultActiveKey='group-by'
       >
         <PlotLegendAlert
-          isLegendEnabled={config.legend.enabled}
+          isLegendEnabled={config?.legend?.enabled}
           numLegendItems={numLegendItems}
           updateFn={updatePlotWithChanges}
         >
