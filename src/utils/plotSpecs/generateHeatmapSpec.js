@@ -27,12 +27,12 @@ const generateSpec = (config, groupName, data, displayLabels = true) => {
   ];
 
   if (config.legend.enabled) {
-    const PADDING_SIZE = 5;
+    const paddingSize = 5;
     const characterSizeVertical = 14;
     const xTickSize = 140;
 
     const maxLegendItemsPerCol = Math.floor(
-      (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
+      (config.dimensions.height - xTickSize - (2 * paddingSize))
       / characterSizeVertical,
     );
 

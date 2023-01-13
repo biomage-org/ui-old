@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { intersection } from '../cellSetOperations';
 
-const PADDING_SIZE = 5;
+const paddingSize = 5;
 
 const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
   const frequencyProportional = config.frequencyType === 'proportional';
@@ -32,7 +32,7 @@ const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
     const characterSizeVertical = 16;
     const xTickSize = 140;
     const maxLegendItemsPerCol = Math.floor(
-      (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
+      (config.dimensions.height - xTickSize - (2 * paddingSize))
       / characterSizeVertical,
     );
 
@@ -83,7 +83,7 @@ const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
     height: config.dimensions.height,
     autosize: { type: 'fit', resize: true },
     background: config.colour.toggleInvert,
-    padding: PADDING_SIZE,
+    padding: paddingSize,
 
     data: [
       {

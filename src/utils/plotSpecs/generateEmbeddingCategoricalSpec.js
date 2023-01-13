@@ -2,7 +2,7 @@
 import _ from 'lodash';
 import { getAllCells, getSampleCells } from 'utils/cellSets';
 
-const PADDING_SIZE = 5;
+const paddingSize = 5;
 
 const generateSpec = (config, plotData, cellSetLegendsData) => {
   const xScaleDomain = config.axesRanges.xAxisAuto
@@ -44,7 +44,7 @@ const generateSpec = (config, plotData, cellSetLegendsData) => {
     const xTickSize = 140;
 
     const maxLegendItemsPerCol = Math.floor(
-      (config.dimensions.height - xTickSize - (2 * PADDING_SIZE))
+      (config.dimensions.height - xTickSize - (2 * paddingSize))
       / characterSizeVertical,
     );
 
