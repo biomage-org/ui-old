@@ -110,7 +110,7 @@ const NormalisationOptions = (props) => {
           })}
           disabled={disabled}
         >
-          <Option value='logNormalize'>LogNormalize</Option>
+          <Option value='LogNormalize'>LogNormalize</Option>
 
           <Option value='SCT' disabled={methodId !== 'seuratv4'}>
             SCTransform

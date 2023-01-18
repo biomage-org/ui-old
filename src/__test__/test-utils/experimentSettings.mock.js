@@ -80,15 +80,15 @@ const generateProcessingConfigMock = (sampleIds) => ({
       methodSettings: {
         seuratv4: {
           numGenes: 2000,
-          normalisation: 'logNormalize',
+          normalisation: 'LogNormalize',
         },
         fastmnn: {
           numGenes: 2000,
-          normalisation: 'logNormalize',
+          normalisation: 'LogNormalize',
         },
         unisample: {
           numGenes: 2000,
-          normalisation: 'logNormalize',
+          normalisation: 'LogNormalize',
         },
       },
     },
