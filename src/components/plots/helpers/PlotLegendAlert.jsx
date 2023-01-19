@@ -45,16 +45,10 @@ const PlotLegendAlert = (props) => {
 };
 
 PlotLegendAlert.propTypes = {
-  numLegendItems: PropTypes.number,
-  isLegendEnabled: PropTypes.bool,
-  children: PropTypes.node,
+  numLegendItems: PropTypes.number.isRequired,
+  isLegendEnabled: PropTypes.bool.isRequired,
+  children: PropTypes.node.isRequired,
   updateFn: PropTypes.func.isRequired,
-};
-
-PlotLegendAlert.defaultProps = {
-  numLegendItems: 0,
-  isLegendEnabled: true,
-  children: null,
 };
 
 export default PlotLegendAlert;
