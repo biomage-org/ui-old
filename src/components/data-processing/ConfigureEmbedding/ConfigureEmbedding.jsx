@@ -374,7 +374,7 @@ const ConfigureEmbedding = (props) => {
 
           <CalculationConfig experimentId={experimentId} onConfigChange={onConfigChange} />
           <Collapse>
-            <Panel header='Plot options' key='styling'>
+            <Panel header='Plot styling' key='styling'>
               <div style={{ height: 8 }} />
               <PlotStyling
                 formConfig={plotStylingControlsConfig}
