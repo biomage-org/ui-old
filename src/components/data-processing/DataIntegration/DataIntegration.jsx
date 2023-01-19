@@ -290,7 +290,7 @@ const DataIntegration = (props) => {
   };
   const radioStyle = {
     display: 'block',
-    height: '30px',
+    minHeight: '30px',
   };
 
   return (
