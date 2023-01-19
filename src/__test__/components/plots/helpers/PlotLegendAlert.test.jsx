@@ -15,12 +15,11 @@ describe('PlotLegendAlert', () => {
       </PlotLegendAlert>,
     );
 
-    expect(screen.queryByText(/The plot legend is hidden to not interfere with the display of the plot./gi)).toBeNull();
+    expect(screen.queryByText(/We have hidden the plot legend, because it is too large and it interferes with the display of the plot./gi)).toBeNull();
     expect(screen.getByText('MOCK PLOT')).toBeInTheDocument();
   });
 
   it('Displays legend is hidden if more than 50 legend items are to be shown', () => {
-    const numLegendItems = 100;
     const mockUpdateFn = jest.fn();
 
     render(
@@ -32,12 +31,8 @@ describe('PlotLegendAlert', () => {
       </PlotLegendAlert>,
     );
 
-    expect(screen.getByText(
-      new RegExp(`The plot legend contains ${numLegendItems} items, making the legend very large.`, 'ig'),
-    )).toBeInTheDocument();
-
-    expect(screen.getByText(/The plot legend is hidden to not interfere with the display of the plot./gi)).toBeInTheDocument();
-    expect(screen.getByText(/You can display the plot legend, by changing the settings under/gi)).toBeInTheDocument();
+    expect(screen.getByText(/We have hidden the plot legend, because it is too large and it interferes with the display of the plot./gi)).toBeInTheDocument();
+    expect(screen.getByText(/You can still display the plot legend by changing the value of "Toggle Legend" option in Plot styling settings under "Legend"/gi)).toBeInTheDocument();
     expect(screen.getByText('MOCK PLOT')).toBeInTheDocument();
     expect(mockUpdateFn).toHaveBeenCalledTimes(1);
   });
