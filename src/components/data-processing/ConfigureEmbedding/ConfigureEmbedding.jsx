@@ -359,7 +359,7 @@ const ConfigureEmbedding = (props) => {
           {renderPlot()}
         </Col>
 
-        <Col flex='1 0px'>
+        <Col flex='1 0px' style={{ minWidth: '300px' }}>
           <Collapse defaultActiveKey={['plot-selector']}>
             <Panel header='Plot view' key='plot-selector'>
               <Radio.Group onChange={(e) => setSelectedPlot(e.target.value)} value={selectedPlot}>
