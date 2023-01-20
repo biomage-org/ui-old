@@ -10,6 +10,7 @@ describe('PlotLegendAlert', () => {
     render(
       <PlotLegendAlert
         updateFn={() => {}}
+        isLegendEnabled
       >
         <MockPlot />
       </PlotLegendAlert>,
@@ -26,6 +27,7 @@ describe('PlotLegendAlert', () => {
       <PlotLegendAlert
         numLegendItems={100}
         updateFn={mockUpdateFn}
+        isLegendEnabled
       >
         <MockPlot />
       </PlotLegendAlert>,
@@ -35,6 +37,52 @@ describe('PlotLegendAlert', () => {
     expect(screen.getByText(/You can still display the plot legend by changing the value of "Toggle Legend" option in Plot styling settings under "Legend"/gi)).toBeInTheDocument();
     expect(screen.getByText('MOCK PLOT')).toBeInTheDocument();
     expect(mockUpdateFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('Do not display alert anymore if legend has been seen', () => {
+    const mockUpdateFn = jest.fn();
+
+    // First time render should show
+    const { rerender } = render(
+      <PlotLegendAlert
+        isLegendEnabled
+        numLegendItems={100}
+        updateFn={mockUpdateFn}
+      >
+        <MockPlot />
+      </PlotLegendAlert>,
+    );
+
+    expect(screen.getByText(/We have hidden the plot legend, because it is too large and it interferes with the display of the plot./gi)).toBeInTheDocument();
+    expect(screen.getByText('MOCK PLOT')).toBeInTheDocument();
+    expect(mockUpdateFn).toHaveBeenCalledTimes(1);
+
+    // If the legend enabled is changed, subsequent renders should not show
+    rerender(
+      <PlotLegendAlert
+        isLegendEnabled={false}
+        numLegendItems={100}
+        updateFn={mockUpdateFn}
+      >
+        <MockPlot />
+      </PlotLegendAlert>,
+    );
+
+    expect(screen.queryByText(/We have hidden the plot legend, because it is too large and it interferes with the display of the plot./gi)).toBeNull();
+    expect(screen.getByText('MOCK PLOT')).toBeInTheDocument();
+
+    rerender(
+      <PlotLegendAlert
+        isLegendEnabled
+        numLegendItems={100}
+        updateFn={mockUpdateFn}
+      >
+        <MockPlot />
+      </PlotLegendAlert>,
+    );
+
+    expect(screen.queryByText(/We have hidden the plot legend, because it is too large and it interferes with the display of the plot./gi)).toBeNull();
+    expect(screen.getByText('MOCK PLOT')).toBeInTheDocument();
   });
 
   it('Does not trigger update if the legend is already shown', () => {

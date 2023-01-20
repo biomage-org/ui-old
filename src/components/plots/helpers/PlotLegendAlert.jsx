@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Space,
   Alert,
@@ -9,8 +9,18 @@ const NUM_LEGEND_ITEMS_LIMIT = 50;
 
 const PlotLegendAlert = (props) => {
   const {
-    isLegendEnabled, numLegendItems, updateFn, children,
+    isLegendEnabled,
+    numLegendItems,
+    updateFn,
+    children,
   } = props;
+
+  const hasBeenSeen = useRef(false);
+  const initialLegendEnabled = useRef(isLegendEnabled);
+
+  if (!hasBeenSeen.current && initialLegendEnabled.current !== isLegendEnabled) {
+    hasBeenSeen.current = true;
+  }
 
   useEffect(() => {
     const shouldShowLegend = numLegendItems < NUM_LEGEND_ITEMS_LIMIT;
@@ -21,7 +31,9 @@ const PlotLegendAlert = (props) => {
   return (
     <center>
       <Space direction='vertical'>
-        {numLegendItems > NUM_LEGEND_ITEMS_LIMIT && (
+        {numLegendItems > NUM_LEGEND_ITEMS_LIMIT
+        && !hasBeenSeen.current
+        && (
           <Alert
             message={(
               <p>
@@ -29,7 +41,7 @@ const PlotLegendAlert = (props) => {
                 {'with the display of the plot.'}
                 <br />
                 {'You can still display the plot legend by changing the value of "Toggle Legend" option '}
-                {'in Plot Styling Settings under "Legend"'}
+                {'in Plot Styling settings under "Legend"'}
                 .
               </p>
             )}
