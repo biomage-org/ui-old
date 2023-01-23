@@ -16,22 +16,27 @@ const PlotLegendAlert = (props) => {
   } = props;
 
   const hasLegendBeenToggled = useRef(false);
+  const shouldShowLegend = numLegendItems < NUM_LEGEND_ITEMS_LIMIT;
 
   useEffect(() => {
-    const shouldShowLegend = numLegendItems < NUM_LEGEND_ITEMS_LIMIT;
-
     if (isLegendEnabled !== shouldShowLegend) updateFn({ legend: { enabled: shouldShowLegend } });
   }, [numLegendItems]);
 
   useEffect(() => {
-    hasLegendBeenToggled.current = true;
+    if (isLegendEnabled !== shouldShowLegend) hasLegendBeenToggled.current = true;
   }, [isLegendEnabled]);
+
+  useEffect(() => {
+    // Reset on page revisit
+    hasLegendBeenToggled.current = false;
+  }, []);
 
   return (
     <center>
       <Space direction='vertical'>
         {numLegendItems > NUM_LEGEND_ITEMS_LIMIT
           && !hasLegendBeenToggled.current
+          && !isLegendEnabled
         && (
           <Alert
             message={(
