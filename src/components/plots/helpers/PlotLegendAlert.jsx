@@ -15,12 +15,7 @@ const PlotLegendAlert = (props) => {
     children,
   } = props;
 
-  const hasBeenSeen = useRef(false);
-  const initialLegendEnabled = useRef(isLegendEnabled);
-
-  if (!hasBeenSeen.current && initialLegendEnabled.current !== isLegendEnabled) {
-    hasBeenSeen.current = true;
-  }
+  const hasLegendBeenToggled = useRef(false);
 
   useEffect(() => {
     const shouldShowLegend = numLegendItems < NUM_LEGEND_ITEMS_LIMIT;
@@ -28,11 +23,15 @@ const PlotLegendAlert = (props) => {
     if (isLegendEnabled !== shouldShowLegend) updateFn({ legend: { enabled: shouldShowLegend } });
   }, [numLegendItems]);
 
+  useEffect(() => {
+    hasLegendBeenToggled.current = true;
+  }, [isLegendEnabled]);
+
   return (
     <center>
       <Space direction='vertical'>
         {numLegendItems > NUM_LEGEND_ITEMS_LIMIT
-        && !hasBeenSeen.current
+          && !hasLegendBeenToggled.current
         && (
           <Alert
             message={(
