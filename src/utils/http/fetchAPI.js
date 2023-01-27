@@ -24,6 +24,7 @@ const fetchAPI = async (path, params = {}, extras = {}) => {
     // wrap fetch errors in custom error
     throw new FetchError(e);
   }
+
   if (!response.ok) {
     let data;
     try {
