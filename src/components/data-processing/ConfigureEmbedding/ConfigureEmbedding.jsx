@@ -290,7 +290,7 @@ const ConfigureEmbedding = (props) => {
       return;
     }
 
-    const numLegendItems = hierarchy.find(({ key }) => key === legendItemKey).children.length;
+    const numLegendItems = hierarchy.find(({ key }) => key === legendItemKey)?.children.length;
     const showAlert = numLegendItems > MAX_LEGEND_ITEMS;
 
     if (showAlert) updatePlotWithChanges({ legend: { showAlert, enabled: !showAlert } });
