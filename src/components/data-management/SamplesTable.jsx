@@ -328,7 +328,7 @@ const SamplesTable = forwardRef((props, ref) => {
     >
       {() => (
         <Table
-          scroll={{ y: size.height, x: 'max-content' }}
+          scroll={{ x: 'max-content' }}
           components={VT}
           columns={tableColumns}
           dataSource={fullTableData}
