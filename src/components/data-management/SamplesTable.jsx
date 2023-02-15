@@ -324,11 +324,14 @@ const SamplesTable = forwardRef((props, ref) => {
       handleHeight
       refreshMode='throttle'
       refreshRate={500}
-      onResize={(height) => { setSize({ height }); }}
+      onResize={(height) => {
+        // 500 is the amount of px in the vertical direction that is not occupied by teh table
+        setSize({ height: height - 500 });
+      }}
     >
       {() => (
         <Table
-          scroll={{ x: 'max-content' }}
+          scroll={{ y: size.height, x: 'max-content' }}
           components={VT}
           columns={tableColumns}
           dataSource={fullTableData}
