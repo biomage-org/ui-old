@@ -70,7 +70,7 @@ const ProjectDetails = ({ width, height }) => {
             {`Project ID: ${activeExperimentId}`}
           </Text>
         </div>
-        <div style={{ flex: 1, overflowY: 'hidden' }}>
+        <div style={{ flex: 1, overflowY: 'auto' }}>
           <Text strong>
             Description:
           </Text>
