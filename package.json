@@ -135,7 +135,7 @@
     "webpack-bundle-analyzer": "^4.7.0"
   },
   "devDependencies": {
-    "@testing-library/dom": "^7.30.2",
+    "@testing-library/dom": "^9.0.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^11.2.6",
     "@testing-library/user-event": "^13.5.0",
