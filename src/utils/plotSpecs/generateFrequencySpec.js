@@ -2,6 +2,8 @@ import _ from 'lodash';
 
 import { intersection } from '../cellSetOperations';
 
+const paddingSize = 5;
+
 const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
   const frequencyProportional = config.frequencyType === 'proportional';
   const yAutoDomain = frequencyProportional ? [0, 100] : { data: 'plotData', field: 'y1' };
@@ -26,15 +28,20 @@ const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
     //  each name and multiplying by each approx char size, 5.5
     //  plus 30 for the color symbol and offset
     const colorSymbolSize = 30;
-    const characterSize = 5.5;
-
-    const legendSize = colorSymbolSize + _.max(
-      yNamesToDisplay.map((legendName) => legendName.length * characterSize),
+    const characterSizeHorizontal = 5.5;
+    const characterSizeVertical = 16;
+    const xTickSize = 140;
+    const maxLegendItemsPerCol = Math.floor(
+      (config.dimensions.height - xTickSize - (2 * paddingSize))
+      / characterSizeVertical,
     );
 
-    // only 20 rows per column if the legend is on the right
+    const legendSize = colorSymbolSize + _.max(
+      yNamesToDisplay.map((legendName) => legendName.length * characterSizeHorizontal),
+    );
+
     const legendColumns = positionIsRight
-      ? Math.ceil(yNamesToDisplay.length / 20)
+      ? Math.ceil(yNamesToDisplay.length / maxLegendItemsPerCol)
       : Math.floor((config.dimensions.width) / legendSize);
     const labelLimit = positionIsRight ? 0 : legendSize;
 
@@ -72,11 +79,12 @@ const generateSpec = (config, plotData, xNamesToDisplay, yNamesToDisplay) => {
 
   return {
     $schema: 'https://vega.github.io/schema/vega/v5.json',
+    description: 'Frequency plot',
     width: config.dimensions.width,
     height: config.dimensions.height,
     autosize: { type: 'fit', resize: true },
     background: config.colour.toggleInvert,
-    padding: 5,
+    padding: paddingSize,
 
     data: [
       {
@@ -256,10 +264,11 @@ const generateData = (hierarchy, properties, config) => {
     // Get the total number of cells in each cell set.
     cellSets.x.forEach((xCellSet, indx) => {
       let total = 0;
+      const xCellSetIds = Array.from(properties[xCellSet.key].cellIds);
+
       cellSets.y.forEach((yCellSet) => {
-        const yCellSetIds = Array.from(properties[yCellSet.key].cellIds);
-        const xCellSetIds = Array.from(properties[xCellSet.key].cellIds);
-        total += xCellSetIds.filter((id) => yCellSetIds.includes(id)).length;
+        const yCellSetIds = properties[yCellSet.key].cellIds;
+        total += xCellSetIds.filter((id) => yCellSetIds.has(id)).length;
       });
 
       totalYDict[cellSets.x[indx].key] = total;
@@ -292,6 +301,7 @@ const generateData = (hierarchy, properties, config) => {
 
   const yNamesToDisplay = cellSets.y.map(({ key }) => properties[key].name);
   const xNamesToDisplay = cellSets.x.map(({ key }) => properties[key].name);
+
   return { xNamesToDisplay, yNamesToDisplay, plotData };
 };
 
