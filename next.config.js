@@ -65,7 +65,7 @@ const nextConfig = {
     ];
   },
   experimental: {
-    productionBrowserSourceMaps: true,
+    turboMode: true,
   },
   webpack: (config, params) => {
     const { dev } = params;
@@ -94,11 +94,16 @@ const nextConfig = {
 
     return final;
   },
+
+  publicRuntimeConfig: {
+    domainName: process.env.DOMAIN_NAME,
+    accountId: process.env.AWS_ACCOUNT_ID,
+  },
 };
 
-module.exports = withPlugins([
-  [withBundleAnalyzer],
-  [images],
+const plugins = [
+  withBundleAnalyzer,
+  images,
   [less, {
     lessLoaderOptions: {
       javascriptEnabled: true,
@@ -106,11 +111,32 @@ module.exports = withPlugins([
       localIdentName: '[local]___[hash:base64:5]',
     },
   }],
-  [css],
-  {
-    publicRuntimeConfig: {
-      domainName: process.env.DOMAIN_NAME,
-      accountId: process.env.AWS_ACCOUNT_ID,
-    },
+  css,
+];
+module.exports = (_phase, { defaultConfig }) => plugins.reduce(
+  (acc, plugin) => {
+    if (Array.isArray(plugin)) {
+      return plugin[0](acc, plugin[1]);
+    }
+    return plugin(acc);
   },
-], nextConfig);
+  { ...nextConfig },
+);
+// module.exports = withPlugins([
+//   [withBundleAnalyzer],
+//   [images],
+//   [less, {
+//     lessLoaderOptions: {
+//       javascriptEnabled: true,
+//       modifyVars: themeVariables,
+//       localIdentName: '[local]___[hash:base64:5]',
+//     },
+//   }],
+//   [css],
+//   {
+//     publicRuntimeConfig: {
+//       domainName: process.env.DOMAIN_NAME,
+//       accountId: process.env.AWS_ACCOUNT_ID,
+//     },
+//   },
+// ], nextConfig);
