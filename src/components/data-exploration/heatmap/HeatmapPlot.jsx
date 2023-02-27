@@ -155,8 +155,10 @@ const HeatmapPlot = (props) => {
     if (louvainClusterCount > 0 && !markerGenesLoadingError && !markerGenesLoading) {
       const nMarkerGenes = calculateIdealNMarkerGenes(louvainClusterCount);
 
+      const cellOrder = populateHeatmapData(cellSets, heatmapSettings, true);
+
       dispatch(loadMarkerGenes(
-        experimentId, louvainClustersResolution, COMPONENT_TYPE, nMarkerGenes,
+        experimentId, louvainClustersResolution, COMPONENT_TYPE, cellOrder, nMarkerGenes,
       ));
     }
   }, [louvainClusterCount]);
@@ -183,9 +185,11 @@ const HeatmapPlot = (props) => {
           if (markerGenesLoadingError) {
             const nMarkerGenes = calculateIdealNMarkerGenes(louvainClusterCount);
 
+            const cellOrder = populateHeatmapData(cellSets, heatmapSettings, true);
+
             dispatch(loadMarkerGenes(
               experimentId, louvainClustersResolution,
-              COMPONENT_TYPE, nMarkerGenes,
+              COMPONENT_TYPE, cellOrder, nMarkerGenes,
             ));
           }
 
