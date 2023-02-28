@@ -66,6 +66,7 @@ metadata:
   namespace: FILLED_IN_BY_CI
   labels:
     sandboxId: FILLED_IN_BY_CI
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   releaseName: FILLED_IN_BY_CI
   interval: 2m0s
