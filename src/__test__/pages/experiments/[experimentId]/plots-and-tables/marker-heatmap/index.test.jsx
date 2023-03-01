@@ -25,6 +25,8 @@ import mockAPI, {
   statusResponse,
 } from '__test__/test-utils/mockAPI';
 import createTestComponentFactory from '__test__/test-utils/testComponentFactory';
+import cellSetsData from '__test__/data/cell_sets.json';
+import { MAX_LEGEND_ITEMS } from 'components/plots/helpers/PlotLegendAlert';
 
 jest.mock('components/header/UserButton', () => () => <></>);
 jest.mock('react-resize-detector', () => (props) => {
@@ -98,12 +100,10 @@ const getTreeGenes = (container) => {
 };
 
 const renderHeatmapPage = async (store) => {
-  await act(async () => (
-    render(
-      <Provider store={store}>
-        {heatmapPageFactory()}
-      </Provider>,
-    )
+  await act(async () => render(
+    <Provider store={store}>
+      {heatmapPageFactory()}
+    </Provider>,
   ));
 };
 
@@ -362,5 +362,54 @@ describe('Marker heatmap plot', () => {
     userEvent.click(clearButton);
 
     expect(searchBox.value).toBe('');
+  });
+
+  it('Renders a plot legend alert if there are more than MAX_LEGEND_ITEMS number of cell sets', async () => {
+    const cellSetsTemplate = (clusterIdx) => ({
+      key: `louvain-${clusterIdx}`,
+      name: `Cluster ${clusterIdx}`,
+      rootNode: false,
+      type: 'cellSets',
+      color: '#000000',
+      cellIds: [clusterIdx],
+    });
+
+    const manyCellSets = [...Array(MAX_LEGEND_ITEMS + 1)].map((c, idx) => cellSetsTemplate(idx));
+
+    // Add to louvain cluster
+    cellSetsData.cellSets[0].children = manyCellSets;
+
+    const manyCellSetsResponse = {
+      ...generateDefaultMockAPIResponses(fake.EXPERIMENT_ID),
+      ...customAPIResponses,
+      [`experiments/${fake.EXPERIMENT_ID}/cellSets`]: () => promiseResponse(JSON.stringify(cellSetsData)),
+    };
+
+    fetchMock.mockIf(/.*/, mockAPI(manyCellSetsResponse));
+
+    await renderHeatmapPage(storeState);
+
+    // The legend alert plot text should appear
+    expect(screen.getByText(/We have hidden the plot legend, because it is too large and it interferes with the display of the plot/)).toBeInTheDocument();
+  });
+
+  it('renders the list of genes correctly', async () => {
+    await renderHeatmapPage(storeState);
+    const genes = getTreeGenes(screen.getByRole('tree'));
+    const geneTable = screen.getByText(genes[0]).parentElement;
+
+    // Render the table if there genes
+    expect(geneTable).toBeInTheDocument();
+
+    // Clear all genes
+    const geneTree = screen.getByRole('tree');
+    genes.forEach((gene) => {
+      const geneElement = within(geneTree).getByText(gene);
+      const geneRemoveButton = geneElement.nextSibling.firstChild;
+      userEvent.click(geneRemoveButton);
+    });
+
+    // Don't render the table if there are no genes
+    expect(geneTable).not.toBeInTheDocument();
   });
 });

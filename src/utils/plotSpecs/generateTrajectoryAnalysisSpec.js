@@ -1,9 +1,11 @@
 /* eslint-disable no-param-reassign */
-import { getAllCells } from 'utils/cellSets';
+import _ from 'lodash';
 
 const maxLabelLength = 85;
 const maxLabelHeight = 25;
-const clustersPerLegendColumn = 20;
+const paddingSize = 5;
+const characterSizeVertical = 11;
+const xTickSize = 40;
 
 const generatePadding = (plotConfig, numClusters) => {
   const showLegend = plotConfig.legend.enabled;
@@ -24,8 +26,13 @@ const generatePadding = (plotConfig, numClusters) => {
 
     const isPositionRight = currentLegendPosition === 'right';
 
+    const maxLegendItemsPerCol = Math.floor(
+      (plotConfig.dimensions.height - xTickSize - (2 * paddingSize))
+      / characterSizeVertical,
+    );
+
     const numClustersPerLineOrColumn = isPositionRight
-      ? clustersPerLegendColumn
+      ? Math.ceil(maxLegendItemsPerCol)
       : Math.ceil(plotConfig.dimensions.width / maxLabelLength);
 
     const paddingPerLine = isPositionRight ? maxLabelLength : maxLabelHeight;
@@ -255,7 +262,7 @@ const generateBaseSpec = (
       grid: true,
       domain: true,
       orient: 'left',
-      titlePadding: 5,
+      titlePadding: paddingSize,
       gridColor: config?.colour.masterColour,
       gridOpacity: (config?.axes.gridOpacity / 20),
       gridWidth: (config?.axes.gridWidth / 20),
@@ -301,12 +308,17 @@ const insertClusterColorsSpec = (
   spec,
   config,
   cellSetLegendsData,
-  numClusters,
 ) => {
   if (config?.legend.enabled) {
     const positionIsRight = config.legend.position === 'right';
+
+    const maxLegendItemsPerCol = Math.floor(
+      (config.dimensions.height - xTickSize - (2 * paddingSize))
+      / characterSizeVertical,
+    );
+
     const legendColumns = positionIsRight
-      ? Math.ceil(numClusters / clustersPerLegendColumn)
+      ? Math.ceil(cellSetLegendsData.length / maxLegendItemsPerCol)
       : Math.floor(config.dimensions.width / maxLabelLength);
     const labelLimit = positionIsRight ? maxLabelLength : 0;
 
@@ -319,7 +331,7 @@ const insertClusterColorsSpec = (
         domain: { data: 'embedding', field: 'cellSetKey' },
       },
       {
-        name: 'sampleToName',
+        name: 'cellSetToName',
         type: 'ordinal',
         range: cellSetLegendsData.map(({ name }) => name),
       },
@@ -341,7 +353,7 @@ const insertClusterColorsSpec = (
           labels: {
             update: {
               text: {
-                scale: 'sampleToName', field: 'label',
+                scale: 'cellSetToName', field: 'label',
               },
               fill: { value: config?.colour.masterColour },
             },
@@ -425,6 +437,7 @@ const insertTrajectorySpec = (
     {
       name: 'highlight',
       values: selectedNodes.map((nodeIdx) => ({
+        nodeId: nodeIdx,
         x: nodesData.x[nodeIdx],
         y: nodesData.y[nodeIdx],
       })),
@@ -528,8 +541,9 @@ const insertTrajectorySpec = (
       },
     },
     {
-      name: 'selectedNodes',
       type: 'symbol',
+      name: 'selectedNodes',
+      interactive: true,
       from: { data: 'highlight' },
       encode: {
         update: {
@@ -571,7 +585,6 @@ const insertPseudotimeSpec = (spec, config, pseudotime) => {
     {
       name: 'backgroundPseudotime',
       values: pseudotime.cellsWithoutPseudotimeValue,
-
     },
     {
       name: 'pseudotime',
@@ -621,7 +634,7 @@ const insertPseudotimeSpec = (spec, config, pseudotime) => {
         update: {
           x: { scale: 'xscale', field: 'x' },
           y: { scale: 'yscale', field: 'y' },
-          size: { value: config.marker.size },
+          size: { signal: 'size' },
           fill: { value: 'lightgrey' },
           shape: { value: config.marker.shape },
           fillOpacity: { value: config.marker.opacity / 10 },
@@ -636,7 +649,7 @@ const insertPseudotimeSpec = (spec, config, pseudotime) => {
         update: {
           x: { scale: 'xscale', field: 'x' },
           y: { scale: 'yscale', field: 'y' },
-          size: { value: config.marker.size },
+          size: { signal: 'size' },
           fill: {
             scale: 'pseudotimeScale',
             field: 'value',
@@ -647,6 +660,57 @@ const insertPseudotimeSpec = (spec, config, pseudotime) => {
       },
     },
   ];
+};
+
+const generateTrajectoryEmbeddingData = (cellSets, embedding, selectedCellSets) => {
+  const plotData = [];
+  const cellSetLegendsData = [];
+
+  let selectedCellSetObjects = Object.keys(cellSets.properties)
+    .filter((key) => selectedCellSets.includes(key))
+    .map((key) => ({
+      key,
+      ...cellSets.properties[key],
+    }));
+
+  // Get all children contained in rootNodes
+  selectedCellSetObjects = selectedCellSetObjects.map((cellSet) => {
+    const { rootNode, key } = cellSet;
+    if (!rootNode) return cellSet;
+
+    return cellSets.hierarchy.find(({ key: parentKey }) => parentKey === key)
+      .children.map(({ key: childKey }) => ({
+        key: childKey,
+        ...cellSets.properties[childKey],
+      }));
+  }).flat();
+
+  // Filter array for duplicate cell sets
+  selectedCellSetObjects = _.uniqBy(selectedCellSetObjects, 'key');
+
+  selectedCellSetObjects.forEach((cellSet) => {
+    const { key, name, color } = cellSet;
+
+    cellSetLegendsData.push(({ key, name, color }));
+
+    cellSet.cellIds.forEach((cellId) => {
+      if (!embedding[cellId]) return;
+
+      plotData.push({
+        cellId,
+        cellSetKey: key,
+        cellSetName: name,
+        color,
+        x: embedding[cellId][0],
+        y: embedding[cellId][1],
+      });
+    });
+  });
+
+  return {
+    plotData,
+    cellSetLegendsData,
+  };
 };
 
 // Data returned from the trajectory analysis worker is 0 centered
@@ -663,12 +727,12 @@ const generateStartingNodesData = (nodes) => {
   Object.values(nodes.x).forEach((nodeIdxX, nodeIdx) => {
     connectedNodes[nodeIdx].forEach((connectedIdx) => {
       trajectoryNodes.push(
-        { x: nodeIdxX, y: y[nodeIdx], node_id: nodeIdx },
+        { x: nodeIdxX, y: y[nodeIdx], nodeId: nodeIdx },
       );
       trajectoryNodes.push(
-        { x: x[connectedIdx], y: y[connectedIdx], node_id: connectedIdx },
+        { x: x[connectedIdx], y: y[connectedIdx], nodeId: connectedIdx },
       );
-      trajectoryNodes.push({ x: null, y: null, node_id: null });
+      trajectoryNodes.push({ x: null, y: null, nodeId: null });
     });
   });
 
@@ -676,26 +740,18 @@ const generateStartingNodesData = (nodes) => {
 };
 
 const generatePseudotimeData = (
-  cellSets,
   plotData,
-  embeddingData,
+  embeddingPlotData,
 ) => {
-  const selectedSampleCells = getAllCells(cellSets).map((cell) => cell.cellId);
-
   const cellsWithPseudotimeValue = [];
   const cellsWithoutPseudotimeValue = [];
 
-  const filteredCells = embeddingData
-    .map((coordinates, cellId) => ({ cellId, coordinates }))
-    .filter(({ cellId }) => selectedSampleCells.includes(cellId))
-    .filter(({ coordinates }) => coordinates !== undefined);
-
-  filteredCells
+  embeddingPlotData
     .forEach((data) => {
-      const { cellId, coordinates } = data;
+      const { cellId, x, y } = data;
       const cellData = {
-        x: coordinates[0],
-        y: coordinates[1],
+        x,
+        y,
         value: plotData[cellId],
       };
 
@@ -733,10 +789,10 @@ const generateTrajectoryAnalysisSpec = (
   if (displaySettings.showPseudotimeValues && pseudotimeData) {
     insertPseudotimeSpec(spec, config, pseudotimeData);
   } else {
-    insertClusterColorsSpec(spec, config, cellSetLegendsData, cellSetLegendsData.length);
+    insertClusterColorsSpec(spec, config, cellSetLegendsData);
   }
 
-  if (displaySettings.showStartingNodes) {
+  if (startingNodesData && displaySettings.showStartingNodes) {
     insertTrajectorySpec(
       spec,
       startingNodesData,
@@ -750,6 +806,7 @@ const generateTrajectoryAnalysisSpec = (
 
 export {
   generateTrajectoryAnalysisSpec,
+  generateTrajectoryEmbeddingData,
   generateStartingNodesData,
   generatePseudotimeData,
 };

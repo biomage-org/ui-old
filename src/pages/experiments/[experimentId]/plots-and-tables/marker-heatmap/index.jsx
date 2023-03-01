@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Collapse,
   Skeleton,
   Empty,
   Radio,
+  Space,
 } from 'antd';
 import _ from 'lodash';
 import { useSelector, useDispatch } from 'react-redux';
@@ -34,6 +35,8 @@ import populateHeatmapData from 'components/plots/helpers/heatmap/populateHeatma
 import generateVegaData from 'components/plots/helpers/heatmap/vega/generateVegaData';
 import { plotNames } from 'utils/constants';
 
+import PlotLegendAlert, { MAX_LEGEND_ITEMS } from 'components/plots/helpers/PlotLegendAlert';
+
 import ScrollOnDrag from 'components/plots/ScrollOnDrag';
 
 const { Panel } = Collapse;
@@ -47,6 +50,7 @@ const MarkerHeatmap = ({ experimentId }) => {
   const [vegaSpec, setVegaSpec] = useState();
 
   const config = useSelector((state) => state.componentConfig[plotUuid]?.config);
+  const configIsLoaded = useSelector((state) => !_.isNil(state.componentConfig[plotUuid]));
 
   const { expression: expressionData } = useSelector((state) => state.genes);
   const { error, loading } = expressionData;
@@ -57,6 +61,10 @@ const MarkerHeatmap = ({ experimentId }) => {
   const selectedCellSetClassAvailable = useSelector(
     getCellSetsHierarchyByKeys([config?.selectedCellSet]),
   ).length;
+
+  const numLegendItems = useSelector(
+    getCellSetsHierarchyByKeys([config?.selectedCellSet]),
+  )[0]?.children?.length;
 
   const loadedMarkerGenes = useSelector(
     (state) => state.genes.expression.views[plotUuid]?.data,
@@ -77,6 +85,20 @@ const MarkerHeatmap = ({ experimentId }) => {
     if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
     if (!hierarchy?.length) dispatch(loadCellSets(experimentId));
   }, []);
+
+  const updatePlotWithChanges = (updatedField) => {
+    dispatch(updatePlotConfig(plotUuid, updatedField));
+  };
+
+  useEffect(() => {
+    if (!configIsLoaded
+      || !cellSets.accessible
+      || !config.legend.enabled) return;
+
+    const showAlert = numLegendItems > MAX_LEGEND_ITEMS;
+
+    if (showAlert) updatePlotWithChanges({ legend: { showAlert, enabled: !showAlert } });
+  }, [configIsLoaded, cellSets.accessible]);
 
   useEffect(() => {
     if (louvainClustersResolution && config?.nMarkerGenes && hierarchy?.length) {
@@ -258,11 +280,6 @@ const MarkerHeatmap = ({ experimentId }) => {
     if (treeScrollable) ScrollOnDrag(treeScrollable);
   }, [treeScrollable]);
 
-  // updatedField is a subset of what default config has and contains only the things we want change
-  const updatePlotWithChanges = (updatedField) => {
-    dispatch(updatePlotConfig(plotUuid, updatedField));
-  };
-
   const plotStylingConfig = [
     {
       panelTitle: 'Expression values',
@@ -339,6 +356,7 @@ const MarkerHeatmap = ({ experimentId }) => {
           onReset={onReset}
           onGenesChange={onGenesChange}
           onGenesSelect={onGenesSelect}
+          showGeneTable={config.selectedGenes.length > 0}
         />
         <div style={{ paddingTop: '10px' }}>
           <p>Gene labels:</p>
@@ -434,8 +452,7 @@ const MarkerHeatmap = ({ experimentId }) => {
     if (!config
       || loading.length > 0
       || !cellSets.accessible
-      || loadingMarkerGenes
-      || !config.selectedGenes.length) {
+      || loadingMarkerGenes) {
       return (<Loader experimentId={experimentId} />);
     }
 
@@ -446,7 +463,16 @@ const MarkerHeatmap = ({ experimentId }) => {
     }
 
     if (vegaSpec) {
-      return <Vega spec={vegaSpec} renderer='webgl' />;
+      return (
+        <Space direction='vertical'>
+          {config.legend.showAlert
+            && numLegendItems > MAX_LEGEND_ITEMS
+            && <PlotLegendAlert />}
+          <center>
+            <Vega spec={vegaSpec} renderer='webgl' />
+          </center>
+        </Space>
+      );
     }
   };
 

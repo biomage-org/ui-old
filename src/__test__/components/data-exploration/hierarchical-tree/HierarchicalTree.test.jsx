@@ -13,18 +13,21 @@ import fake from '__test__/test-utils/constants';
 const firstChild = {
   key: '1a',
   name: 'first child',
+  rootNode: false,
   color: '#00FF00',
 };
 
 const secondChild = {
   key: '2a',
   name: 'second child',
+  rootNode: false,
   color: '#00FF00',
 };
 
 const thirdChild = {
   key: '3a',
   name: 'third child',
+  rootNode: false,
   color: '#00FF00',
 };
 
@@ -343,6 +346,7 @@ describe('HierarchicalTree', () => {
         treeData={treeData}
         experimentId={fake.EXPERIMENT_ID}
         onNodeUpdate={mockOnNodeUpdate}
+        shouldExpandKeys
       />,
     );
 
@@ -373,6 +377,7 @@ describe('HierarchicalTree', () => {
         treeData={treeData}
         experimentId={fake.EXPERIMENT_ID}
         onNodeUpdate={mockOnNodeUpdate}
+        shouldExpandKeys
       />,
     );
 
@@ -408,6 +413,7 @@ describe('HierarchicalTree', () => {
         treeData={treeData}
         experimentId={fake.EXPERIMENT_ID}
         onNodeDelete={mockOnNodeDelete}
+        shouldExpandKeys
       />,
     );
 
@@ -426,7 +432,7 @@ describe('HierarchicalTree', () => {
     component.update();
 
     expect(mockOnNodeDelete).toHaveBeenCalledTimes(1);
-    expect(mockOnNodeDelete).toHaveBeenCalledWith('1a');
+    expect(mockOnNodeDelete).toHaveBeenCalledWith('1a', false);
   });
 
   it('Doesn\'t crash if callbacks aren\'t defined', async () => {
@@ -438,6 +444,7 @@ describe('HierarchicalTree', () => {
       <HierarchicalTree
         treeData={treeData}
         experimentId={fake.EXPERIMENT_ID}
+        shouldExpandKeys
       />,
     );
 

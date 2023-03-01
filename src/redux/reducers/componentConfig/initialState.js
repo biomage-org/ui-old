@@ -17,7 +17,6 @@ const embeddingCategoricalInitialConfig = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -178,7 +177,6 @@ const frequencyInitialConfig = {
   legend: {
     ...legendBaseState,
     title: 'Cell Set',
-    position: 'top',
     offset: 40,
   },
   labels: labelBaseState,
@@ -210,7 +208,6 @@ const violinConfig = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top',
     enabled: false,
   },
   dimensions: {
@@ -252,7 +249,6 @@ const dotPlotConfig = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'right',
     enabled: true,
     direction: 'vertical',
   },
@@ -291,7 +287,6 @@ const trajectoryAnalysisInitialConfig = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -311,17 +306,15 @@ const trajectoryAnalysisInitialConfig = {
   },
   fontStyle: fontStyleBaseState,
   colour: colourBaseState,
-  marker: {
-    ...markerBaseState,
-    size: 20,
-  },
+  marker: markerBaseState,
   labels: {
     ...labelBaseState,
     enabled: false,
   },
   selectedNodes: [],
-  selectedCellSet: 'louvain',
-  selectedSample: 'All',
+  selectedCellSets: ['louvain'],
+  embeddingCellSet: 'louvain',
+  embeddingSample: 'All',
 };
 
 // PLOTS & TABLES - Multi view
@@ -336,7 +329,6 @@ const embeddingPreviewBySampleInitialConfig = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -371,7 +363,6 @@ const embeddingPreviewByCellSetsInitialConfig = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -529,7 +520,6 @@ const cellSizeDistributionHistogram = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top-left',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -558,7 +548,6 @@ const cellSizeDistributionKneePlot = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top-left',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -591,7 +580,6 @@ const mitochondrialFractionHistogram = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top-right',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -621,7 +609,6 @@ const mitochondrialFractionLogHistogram = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top-right',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -651,7 +638,6 @@ const classifierKneePlot = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top-right',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -741,7 +727,6 @@ const doubletScoreHistogram = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top-right',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -770,7 +755,6 @@ const dataIntegrationEmbeddingInitialConfig = {
   spec: '1.0.0',
   legend: {
     ...legendBaseState,
-    position: 'top',
   },
   dimensions: {
     ...dimensionsBaseState,
@@ -808,7 +792,6 @@ const dataIntegrationFrequencyInitialConfig = {
   legend: {
     ...legendBaseState,
     title: 'Sample',
-    position: 'top',
     offset: 10,
   },
   dimensions: {
@@ -836,7 +819,6 @@ const dataIntegrationFrequencyInitialConfig = {
 const dataIntegrationElbowPlotInitialConfig = {
   legend: {
     ...legendBaseState,
-    position: 'top',
   },
   labels: labelBaseState,
   dimensions: {

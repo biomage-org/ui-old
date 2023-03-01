@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import _ from 'lodash';
 import PropTypes from 'prop-types';
 import {
-  Row, Col, PageHeader, Radio, Collapse, Empty, Alert,
+  Row, Col, PageHeader, Radio, Collapse, Empty, Alert, Space,
 } from 'antd';
 import SelectData from 'components/plots/styling/embedding-continuous/SelectData';
 
@@ -11,6 +11,7 @@ import { isUnisample } from 'utils/experimentPredicates';
 
 import CategoricalEmbeddingPlot from 'components/plots/CategoricalEmbeddingPlot';
 import ContinuousEmbeddingPlot from 'components/plots/ContinuousEmbeddingPlot';
+import ViolinFilterPlot from 'components/plots/ViolinFilterPlot';
 
 import {
   updatePlotConfig,
@@ -24,6 +25,7 @@ import { generateDataProcessingPlotUuid } from 'utils/generateCustomPlotUuid';
 import Loader from 'components/Loader';
 import { getCellSets } from 'redux/selectors';
 import CalculationConfig from 'components/data-processing/ConfigureEmbedding/CalculationConfig';
+import PlotLegendAlert, { MAX_LEGEND_ITEMS } from 'components/plots/helpers/PlotLegendAlert';
 
 const { Panel } = Collapse;
 
@@ -31,129 +33,35 @@ const ConfigureEmbedding = (props) => {
   const { experimentId, onConfigChange } = props;
   const [plot, setPlot] = useState(null);
   const filterName = 'configureEmbedding';
+  const plotTypes = ['embedding', 'violin'];
+  const [plotType, setPlotType] = useState('embedding');
+
   const cellSets = useSelector(getCellSets());
   const cellMeta = useSelector((state) => state.cellMeta);
-  const [selectedPlot, setSelectedPlot] = useState('cellCluster');
+
+  const initialPlotColouring = {
+    embedding: 'cellCluster',
+    violin: 'mitochondrialContent',
+  };
+
+  const [plotColouring, setPlotColouring] = useState(initialPlotColouring.embedding);
 
   const dispatch = useDispatch();
   const debounceSave = useCallback(
     _.debounce((plotUuid) => dispatch(savePlotConfig(experimentId, plotUuid)), 2000), [],
   );
-
-  const continuousEmbeddingPlots = ['mitochondrialContent', 'doubletScores', 'numOfGenes', 'numOfUmis'];
+  const cellMetaToLoad = ['mitochondrialContent', 'doubletScores', 'numOfGenes', 'numOfUmis'];
+  const controlsDisabledForViolin = plotType === 'violin';
+  const { hierarchy } = cellSets;
 
   useEffect(() => {
-    continuousEmbeddingPlots.forEach((dataName) => {
+    cellMetaToLoad.forEach((dataName) => {
       if (cellMeta[dataName].loading && !cellMeta[dataName].error) {
         dispatch(loadCellMeta(experimentId, dataName));
       }
     });
   }, []);
 
-  const plots = {
-    cellCluster: {
-      title: 'Cell sets',
-      plotUuid: generateDataProcessingPlotUuid(null, filterName, 0),
-      plotType: 'embeddingPreviewByCellSets',
-      plot: (config, actions) => (
-        <CategoricalEmbeddingPlot
-          experimentId={experimentId}
-          config={config}
-          actions={actions}
-          onUpdate={updatePlotWithChanges}
-        />
-      )
-      ,
-    },
-    sample: {
-      title: 'Samples',
-      plotUuid: generateDataProcessingPlotUuid(null, filterName, 1),
-      plotType: 'embeddingPreviewBySample',
-      plot: (config, actions) => (
-        <CategoricalEmbeddingPlot
-          experimentId={experimentId}
-          config={{
-            ...config,
-            legend: {
-              ...config.legend,
-              title: 'Sample Name',
-            },
-            selectedCellSet: 'sample',
-          }}
-          actions={actions}
-          onUpdate={updatePlotWithChanges}
-        />
-      ),
-    },
-    mitochondrialContent: {
-      title: 'Mitochondrial fraction reads',
-      plotUuid: generateDataProcessingPlotUuid(null, filterName, 2),
-      plotType: 'embeddingPreviewMitochondrialContent',
-      plot: (config, actions) => (
-        <ContinuousEmbeddingPlot
-          experimentId={experimentId}
-          config={config}
-          actions={actions}
-          plotData={cellMeta.mitochondrialContent.data}
-          loading={cellMeta.mitochondrialContent.loading}
-          error={cellMeta.mitochondrialContent.error}
-          reloadPlotData={() => dispatch(loadCellMeta(experimentId, 'mitochondrialContent'))}
-          onUpdate={updatePlotWithChanges}
-        />
-      ),
-    },
-    doubletScores: {
-      title: 'Doublet score',
-      plotUuid: generateDataProcessingPlotUuid(null, filterName, 3),
-      plotType: 'embeddingPreviewDoubletScore',
-      plot: (config, actions) => (
-        <ContinuousEmbeddingPlot
-          experimentId={experimentId}
-          config={config}
-          actions={actions}
-          plotData={cellMeta.doubletScores.data}
-          loading={cellMeta.doubletScores.loading}
-          error={cellMeta.doubletScores.error}
-          reloadPlotData={() => dispatch(loadCellMeta(experimentId, 'doubletScores'))}
-          onUpdate={updatePlotWithChanges}
-        />
-      ),
-    },
-    numOfGenes: {
-      title: 'Number of genes',
-      plotUuid: generateDataProcessingPlotUuid(null, filterName, 4),
-      plotType: 'embeddingPreviewNumOfGenes',
-      plot: (config, actions) => (
-        <ContinuousEmbeddingPlot
-          experimentId={experimentId}
-          config={config}
-          actions={actions}
-          plotData={cellMeta.numOfGenes.data}
-          loading={cellMeta.numOfGenes.loading}
-          error={cellMeta.numOfGenes.error}
-          reloadPlotData={() => dispatch(loadCellMeta(experimentId, 'numOfGenes'))}
-          onUpdate={updatePlotWithChanges}
-        />
-      ),
-    },
-    numOfUmis: {
-      title: 'Number of UMIs',
-      plotUuid: generateDataProcessingPlotUuid(null, filterName, 5),
-      plotType: 'embeddingPreviewNumOfUmis',
-      plot: (config, actions) => (
-        <ContinuousEmbeddingPlot
-          experimentId={experimentId}
-          config={config}
-          actions={actions}
-          plotData={cellMeta.numOfUmis.data}
-          loading={cellMeta.numOfUmis.loading}
-          error={cellMeta.numOfUmis.error}
-          reloadPlotData={() => dispatch(loadCellMeta(experimentId, 'numOfUmis'))}
-          onUpdate={updatePlotWithChanges}
-        />
-      ),
-    },
-  };
   const categoricalEmbStylingControls = [
     {
       panelTitle: 'Colour Inversion',
@@ -203,15 +111,171 @@ const ConfigureEmbedding = (props) => {
       controls: ['legend'],
     },
   ];
+  const violinStylingControls = [
+    {
+      panelTitle: 'Markers',
+      controls: ['violinMarkers'],
+    },
+    {
+      panelTitle: 'Legend',
+      controls: [{
+        name: 'legend',
+        props: {
+          option: {
+            positions: 'top-bottom',
+          },
+        },
+      }],
+    },
 
-  const plotSpecificStylingControl = {
-    sample: categoricalEmbStylingControls,
-    cellCluster: categoricalEmbStylingControls,
-    mitochondrialContent: continuousEmbStylingControls,
-    doubletScores: continuousEmbStylingControls,
-    numOfGenes: continuousEmbStylingControls,
-    numOfUmis: continuousEmbStylingControls,
+  ];
+
+  const renderViolin = (colouring, config, actions) => {
+    const { loading, data: plotData, error } = cellMeta[colouring];
+    return (
+      <ViolinFilterPlot
+        experimentId={experimentId}
+        plotData={plotData}
+        config={config}
+        loading={loading}
+        error={error}
+        actions={actions}
+        reloadPlotData={() => dispatch(loadCellMeta(experimentId, colouring))}
+        onUpdate={updatePlotWithChanges}
+        cellSets={cellSets}
+      />
+    );
   };
+
+  const renderContinuousEmbedding = (colouring, config, actions) => {
+    const { loading, data: plotData, error } = cellMeta[colouring];
+    return (
+      <ContinuousEmbeddingPlot
+        experimentId={experimentId}
+        plotData={plotData}
+        config={config}
+        loading={loading}
+        error={error}
+        reloadPlotData={() => dispatch(loadCellMeta(experimentId, colouring))}
+        onUpdate={updatePlotWithChanges}
+        actions={actions}
+      />
+    );
+  };
+
+  const renderCategoricalEmbedding = (config, actions) => (
+    <Space direction='vertical'>
+      {config?.legend?.showAlert && <PlotLegendAlert stylingSectionName='Plot Options' />}
+      <CategoricalEmbeddingPlot
+        experimentId={experimentId}
+        config={config}
+        actions={actions}
+        onUpdate={updatePlotWithChanges}
+      />
+    </Space>
+  );
+
+  const plots = {
+    cellCluster: {
+      title: 'Cell sets',
+      subPlots: {
+        embedding: {
+          plotUuid: generateDataProcessingPlotUuid(null, filterName, 0),
+          plotType: 'embeddingPreviewByCellSets',
+          plotStyling: categoricalEmbStylingControls,
+          plot: (config, actions) => renderCategoricalEmbedding(config, actions),
+        },
+      },
+    },
+    sample: {
+      title: 'Samples',
+      subPlots: {
+        embedding: {
+          plotUuid: generateDataProcessingPlotUuid(null, filterName, 1),
+          plotType: 'embeddingPreviewBySample',
+          plotStyling: categoricalEmbStylingControls,
+          plot: (config, actions) => renderCategoricalEmbedding({
+            ...config,
+            legend: {
+              ...config.legend,
+              title: 'Sample Name',
+            },
+            selectedCellSet: 'sample',
+          }, actions),
+        },
+      },
+    },
+    mitochondrialContent: {
+      title: 'Mitochondrial fraction reads',
+      subPlots: {
+        embedding: {
+          plotUuid: generateDataProcessingPlotUuid(null, filterName, 2),
+          plotType: 'embeddingPreviewMitochondrialContent',
+          plotStyling: continuousEmbStylingControls,
+          plot: (config, actions) => renderContinuousEmbedding('mitochondrialContent', config, actions),
+        },
+        violin: {
+          plotUuid: generateDataProcessingPlotUuid(null, filterName, 6),
+          plotType: 'violin',
+          plotStyling: violinStylingControls,
+          plot: (config, actions) => renderViolin('mitochondrialContent', config, actions),
+        },
+      },
+    },
+    doubletScores: {
+      title: 'Doublet score',
+      subPlots: {
+        embedding: {
+          plotUuid: generateDataProcessingPlotUuid(null, filterName, 3),
+          plotType: 'embeddingPreviewDoubletScore',
+          plotStyling: continuousEmbStylingControls,
+          plot: (config, actions) => renderContinuousEmbedding('doubletScores', config, actions),
+        },
+        violin: {
+          plotUuid: generateDataProcessingPlotUuid(null, filterName, 7),
+          plotType: 'violin',
+          plotStyling: violinStylingControls,
+          plot: (config, actions) => renderViolin('doubletScores', config, actions),
+        },
+      },
+    },
+    numOfGenes: {
+      title: 'Number of genes',
+      subPlots: {
+        embedding: {
+          plotUuid: generateDataProcessingPlotUuid(null, filterName, 4),
+          plotType: 'embeddingPreviewNumOfGenes',
+          plotStyling: continuousEmbStylingControls,
+          plot: (config, actions) => renderContinuousEmbedding('numOfGenes', config, actions),
+        },
+        violin: {
+          plotUuid: generateDataProcessingPlotUuid(null, filterName, 8),
+          plotType: 'violin',
+          plotStyling: violinStylingControls,
+          plot: (config, actions) => renderViolin('numOfGenes', config, actions),
+        },
+      },
+    },
+    numOfUmis: {
+      title: 'Number of UMIs',
+      subPlots: {
+        embedding: {
+          plotUuid: generateDataProcessingPlotUuid(null, filterName, 5),
+          plotType: 'embeddingPreviewNumOfUmis',
+          plotStyling: continuousEmbStylingControls,
+          plot: (config, actions) => renderContinuousEmbedding('numOfUmis', config, actions),
+        },
+        violin: {
+          plotUuid: generateDataProcessingPlotUuid(null, filterName, 9),
+          plotType: 'violin',
+          plotStyling: violinStylingControls,
+          plot: (config, actions) => renderViolin('numOfUmis', config, actions),
+        },
+      },
+    },
+  };
+  const currentPlot = plots[plotColouring].subPlots[plotType] || {};
+  const { plotUuid: activePlotUuid, plotType: activePlotType } = currentPlot;
 
   const plotStylingControlsConfig = [
     {
@@ -232,45 +296,61 @@ const ConfigureEmbedding = (props) => {
       panelTitle: 'Axes and margins',
       controls: ['axesWithRanges'],
     },
-    ...plotSpecificStylingControl[selectedPlot],
+    ...currentPlot.plotStyling,
   ];
 
   const outstandingChanges = useSelector(
-    (state) => state.componentConfig[plots[selectedPlot].plotUuid]?.outstandingChanges,
+    (state) => state.componentConfig[currentPlot?.plotUuid]?.outstandingChanges,
   );
 
   const plotConfigs = useSelector((state) => {
-    const plotUuids = Object.values(plots).map((plotIt) => plotIt.plotUuid);
+    const plotConfigsToReturn = {};
 
-    const plotConfigsToReturn = plotUuids.reduce((acum, plotUuidIt) => {
-      // eslint-disable-next-line no-param-reassign
-      acum[plotUuidIt] = state.componentConfig[plotUuidIt]?.config;
-      return acum;
-    }, {});
-
+    Object.values(plots).forEach(({ subPlots }) => {
+      Object.values(subPlots).forEach(({ plotUuid }) => {
+        plotConfigsToReturn[plotUuid] = state.componentConfig[plotUuid]?.config;
+      });
+    });
     return plotConfigsToReturn;
   });
-
-  const selectedConfig = plotConfigs[plots[selectedPlot].plotUuid];
+  const selectedConfig = plotConfigs[activePlotUuid];
 
   useEffect(() => {
-    Object.values(plots).forEach((obj) => {
-      if (!plotConfigs[obj.plotUuid]) {
-        dispatch(loadPlotConfig(experimentId, obj.plotUuid, obj.plotType));
-      }
+    Object.values(plots).forEach(({ subPlots }) => {
+      Object.values(subPlots).forEach((subPlot) => {
+        dispatch(loadPlotConfig(experimentId, subPlot.plotUuid, subPlot.plotType));
+      });
     });
   }, []);
 
   useEffect(() => {
-    // if we change a plot and the config is not saved yet
-    if (outstandingChanges) {
-      dispatch(savePlotConfig(experimentId, plots[selectedPlot].plotUuid));
+    if (!selectedConfig
+      || !cellSets.accessible
+      || !selectedConfig.legend.enabled) return;
+
+    let legendItemKey = null;
+    if (activePlotType === 'embeddingPreviewByCellSets') {
+      legendItemKey = 'louvain';
+    } else if (activePlotType === 'embeddingPreviewBySample') {
+      legendItemKey = 'sample';
+    } else {
+      return;
     }
-  }, [selectedPlot]);
+
+    const numLegendItems = hierarchy.find(({ key }) => key === legendItemKey)?.children.length;
+    const showAlert = numLegendItems > MAX_LEGEND_ITEMS;
+
+    if (showAlert) updatePlotWithChanges({ legend: { showAlert, enabled: !showAlert } });
+  }, [!selectedConfig, activePlotType, cellSets.accessible]);
 
   useEffect(() => {
-    // Do not update anything if the cell sets are stil loading or if
-    // the config does not exist yet.
+    // if we change a plot and the config is not saved yet
+    if (outstandingChanges) {
+      dispatch(savePlotConfig(experimentId, activePlotUuid));
+    }
+  }, [currentPlot]);
+
+  useEffect(() => {
     if (!selectedConfig) {
       return;
     }
@@ -279,19 +359,20 @@ const ConfigureEmbedding = (props) => {
       export: true,
     };
     if (cellSets.accessible && selectedConfig) {
-      setPlot(plots[selectedPlot].plot(selectedConfig, plotActions));
+      setPlot(currentPlot.plot(selectedConfig, plotActions));
     }
-  }, [selectedConfig, cellSets]);
+  }, [selectedConfig, cellSets, cellMeta]);
 
   const updatePlotWithChanges = (obj) => {
-    dispatch(updatePlotConfig(plots[selectedPlot].plotUuid, obj));
-    debounceSave(plots[selectedPlot].plotUuid);
+    dispatch(updatePlotConfig(currentPlot.plotUuid, obj));
+    debounceSave(currentPlot.plotUuid);
   };
 
   const renderExtraControlPanels = () => (
-    <Panel header='Select data' key='select-data'>
+    <Panel header='Select data' key='select-data' collapsible={controlsDisabledForViolin && 'disabled'}>
       <SelectData
         config={selectedConfig}
+        disabled={controlsDisabledForViolin}
         onUpdate={updatePlotWithChanges}
         cellSets={cellSets}
       />
@@ -308,7 +389,7 @@ const ConfigureEmbedding = (props) => {
       );
     }
 
-    if (selectedPlot === 'sample' && cellSets.accessible && isUnisample(cellSets.hierarchy)
+    if (plotColouring === 'sample' && cellSets.accessible && isUnisample(cellSets.hierarchy)
     ) {
       return (
         <center>
@@ -327,34 +408,60 @@ const ConfigureEmbedding = (props) => {
 
   const radioStyle = {
     display: 'block',
-    height: '30px',
+    minHeight: '30px',
   };
 
   return (
     <>
       <PageHeader
-        title={plots[selectedPlot].title}
+        title={plots[plotColouring].title}
         style={{ width: '100%', paddingRight: '0px' }}
       />
       <Row gutter={16}>
         <Col flex='auto'>
-          {renderPlot()}
+          <center>
+            {renderPlot()}
+          </center>
         </Col>
 
-        <Col flex='1 0px'>
+        <Col flex='1 0px' style={{ minWidth: '300px' }}>
           <Collapse defaultActiveKey={['plot-selector']}>
             <Panel header='Plot view' key='plot-selector'>
-              <Radio.Group onChange={(e) => setSelectedPlot(e.target.value)} value={selectedPlot}>
-                {Object.entries(plots).map(([key, plotObj]) => (
-                  <Radio key={key} style={radioStyle} value={key}>
-                    {plotObj.title}
-                  </Radio>
-                ))}
-              </Radio.Group>
+              <Space direction='vertical'>
+                Plot type:
+                <Radio.Group
+                  onChange={(e) => {
+                    // also reset the colouring to the initial for the plot type, because
+                    // some plot types do not have every colouring option
+                    setPlotType(e.target.value);
+                    setPlotColouring(initialPlotColouring[e.target.value]);
+                  }}
+                  value={plotType}
+                >
+                  {plotTypes.map((type) => (
+                    <Radio key={type} style={radioStyle} value={type}>
+                      {type[0].toUpperCase() + type.slice(1)}
+                    </Radio>
+                  ))}
+                </Radio.Group>
+                Colour plot by:
+                <Radio.Group onChange={(e) => setPlotColouring(e.target.value)} value={plotColouring}>
+                  {Object.entries(plots).map(([key, plotObj]) => {
+                    if (plots[key].subPlots[plotType]) {
+                      return (
+                        <Radio key={key} style={radioStyle} value={key}>
+                          {plotObj.title}
+                        </Radio>
+                      );
+                    }
+                    return <></>;
+                  })}
+                </Radio.Group>
+              </Space>
             </Panel>
           </Collapse>
 
-          <CalculationConfig experimentId={experimentId} onConfigChange={onConfigChange} />
+          <CalculationConfig experimentId={experimentId} onConfigChange={onConfigChange} disabled={controlsDisabledForViolin} />
           <Collapse>
             <Panel header='Plot options' key='styling'>
               <div style={{ height: 8 }} />
