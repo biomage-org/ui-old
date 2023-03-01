@@ -3,9 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 
-const withPlugins = require('next-compose-plugins');
-const less = require('@zeit/next-less');
-const css = require('@zeit/next-css');
 const images = require('next-images');
 
 const lessToJS = require('less-vars-to-js');
@@ -65,7 +62,11 @@ const nextConfig = {
     ];
   },
   experimental: {
-    turboMode: true,
+    turbo: {
+      loaders: {
+        '.mdx': '@mdx-js/loader',
+      },
+    },
   },
   webpack: (config, params) => {
     const { dev } = params;
@@ -104,16 +105,8 @@ const nextConfig = {
 const plugins = [
   withBundleAnalyzer,
   images,
-  [less, {
-    lessLoaderOptions: {
-      javascriptEnabled: true,
-      modifyVars: themeVariables,
-      localIdentName: '[local]___[hash:base64:5]',
-    },
-  }],
-  css,
 ];
-module.exports = (_phase, { defaultConfig }) => plugins.reduce(
+module.exports = () => plugins.reduce(
   (acc, plugin) => {
     if (Array.isArray(plugin)) {
       return plugin[0](acc, plugin[1]);
