@@ -136,7 +136,7 @@
   "devDependencies": {
     "@testing-library/dom": "^7.30.2",
     "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^11.2.6",
+    "@testing-library/react": "^12.1.5",
     "@testing-library/user-event": "^13.5.0",
     "babel-eslint": "^9.0.0",
     "babel-jest": "^26.0.1",
