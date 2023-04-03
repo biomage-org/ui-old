@@ -63,7 +63,8 @@ const getAuthenticationInfo = async () => {
    * local development.
    */
   const k8sEnv = process.env.K8S_ENV || 'staging';
-  const userPoolName = `biomage-user-pool-case-insensitive-${k8sEnv}`;
+  // const userPoolName = `biomage-user-pool-case-insensitive-${k8sEnv}`;
+  const userPoolName = 'agi-test-okta-sso';
 
   const identityPoolId = IdentityPools.find(
     (pool) => pool.IdentityPoolName.includes(`${k8sEnv}-${sandboxId}`),
