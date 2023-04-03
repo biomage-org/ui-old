@@ -1,3 +1,5 @@
+// Remove before merging
+
 import Auth from '@aws-amplify/auth';
 import { USER_LOADED } from 'redux/actionTypes/user';
 
