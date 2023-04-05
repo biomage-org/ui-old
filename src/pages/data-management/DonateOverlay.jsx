@@ -28,8 +28,9 @@ const DonateOverlay = () => {
           </p>
           <p>
             If you find our services valuable, we kindly ask for your support in the form of a donation.
-            Every contribution, big or small, helps us continue to provide free access to our services and expand our offerings to better serve the academic community.
+            Every contribution, big or small, will help us cover our monthly costs so that we can continue to provide free access to our services and expand our offerings to better serve the academic community.
           </p>
+          <a href='https://www.biomage.net/donations-campaign' target='_blank' rel='noreferrer'>More information</a>
         </Paragraph>
         <a href='https://www.paypal.com/donate/?hosted_button_id=KJ8K3G8RXNGZA' target='_blank' rel='noopener noreferrer'>
           <Button type='primary'>Donate</Button>
