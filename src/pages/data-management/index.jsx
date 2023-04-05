@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { Alert } from 'antd';
 import { loadExperiments } from 'redux/actions/experiments';
 
 import Header from 'components/Header';
@@ -13,8 +12,9 @@ import { loadProcessingSettings } from 'redux/actions/experimentSettings';
 import loadBackendStatus from 'redux/actions/backendStatus/loadBackendStatus';
 import { loadSamples } from 'redux/actions/samples';
 import ExampleExperimentsSpace from 'components/data-management/ExampleExperimentsSpace';
-import { privacyPolicyIsNotAccepted } from 'utils/deploymentInfo';
+import { privacyPolicyIsNotAccepted, DomainName } from 'utils/deploymentInfo';
 import Loader from 'components/Loader';
+import DonateOverlay from './DonateOverlay';
 
 const DataManagementPage = () => {
   const dispatch = useDispatch();
@@ -109,31 +109,7 @@ const DataManagementPage = () => {
   return (
     <>
       <Header title='Data Management' />
-      <Alert
-        showIcon
-        message={(
-          <>
-            <div>
-              <p><b>Dear academic community,</b></p>
-              <p>
-                We believe that knowledge should be freely accessible to all, which is why we provide our services to academics free of charge.
-                However, maintaining and improving our services requires ongoing resources and funding.
-              </p>
-              <p>
-                If you find our services valuable, we kindly ask for your support in the form of a donation.
-                Every contribution, big or small, helps us continue to provide free access to our services and expand our offerings to better serve the academic community.
-              </p>
-              <p>
-                You can donate here -
-                <a href='https://www.paypal.com/donate/?hosted_button_id=KJ8K3G8RXNGZA'>https://www.paypal.com/donate/?hosted_button_id=KJ8K3G8RXNGZA</a>
-              </p>
-              <p>Thank you for your support and for helping us make knowledge accessible to all.</p>
-            </div>
-          </>
-        )}
-        banner
-        closable
-      />
+      {domainName === DomainName.BIOMAGE && (<DonateOverlay />)}
       {newProjectModalVisible ? (
         <NewProjectModal
           onCancel={() => { setNewProjectModalVisible(false); }}
