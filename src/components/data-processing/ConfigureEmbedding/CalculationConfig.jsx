@@ -1,10 +1,10 @@
 import React, {
-  useState, useEffect, useCallback,
+  useState, useEffect, useCallback, useRef,
 } from 'react';
 import _ from 'lodash';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Collapse, InputNumber, Form, Select, Typography, Tooltip, Alert,
+  Collapse, InputNumber, Form, Select, Tooltip, Alert, Space, Button,
 } from 'antd';
 import PropTypes from 'prop-types';
 import { QuestionCircleOutlined } from '@ant-design/icons';
@@ -18,7 +18,6 @@ import SliderWithInput from '../../SliderWithInput';
 
 const { Option } = Select;
 const { Panel } = Collapse;
-const { Text } = Typography;
 
 const MIN_DIST_TEXT = 'This controls how tightly the embedding is allowed to compress points together. '
   + 'Larger values ensure embedded points are more evenly distributed, while '
@@ -46,19 +45,14 @@ const CalculationConfig = (props) => {
   const { umap: umapSettings, tsne: tsneSettings } = data?.embeddingSettings.methodSettings || {};
   const { louvain: louvainSettings } = data?.clusteringSettings.methodSettings || {};
 
-  const debouncedClustering = useCallback(
-    _.debounce((resolution) => {
-      dispatch(runCellSetsClustering(experimentId, resolution));
-    }, 1500),
-    [],
-  );
-
   const [resolution, setResolution] = useState(null);
   const [minDistance, setMinDistance] = useState(null);
+  const currentCluterResolution = useRef(null);
 
   useEffect(() => {
     if (!resolution && louvainSettings) {
       setResolution(louvainSettings.resolution);
+      currentCluterResolution.current = louvainSettings.resolution;
     }
   }, [louvainSettings]);
 
@@ -145,7 +139,7 @@ const CalculationConfig = (props) => {
   const renderUMAPSettings = () => (
     <>
       <Form.Item>
-        <Text strong>Settings for UMAP:</Text>
+        <strong>Settings for UMAP:</strong>
       </Form.Item>
       <Form.Item label={(
         <span>
@@ -207,7 +201,7 @@ const CalculationConfig = (props) => {
   const renderTSNESettings = () => (
     <>
       <Form.Item>
-        <Text strong>Settings for t-SNE:</Text>
+        <strong>Settings for t-SNE:</strong>
       </Form.Item>
       <Form.Item label={(
         <span>
@@ -389,27 +383,39 @@ const CalculationConfig = (props) => {
             </span>
           )}
           >
-            <SliderWithInput
-              min={0}
-              max={10}
-              step={0.1}
-              disabled={disabled}
-              value={resolution}
-              onUpdate={(value) => {
-                if (value === resolution) { return; }
+            <Space align='start'>
+              <SliderWithInput
+                min={0}
+                max={10}
+                step={0.1}
+                disabled={disabled}
+                value={resolution}
+                onUpdate={(value) => {
+                  if (value === resolution) { return; }
 
-                setResolution(value);
-                updateSettings({
-                  clusteringSettings: {
-                    methodSettings: {
-                      louvain: { resolution: value },
+                  setResolution(value);
+                  updateSettings({
+                    clusteringSettings: {
+                      methodSettings: {
+                        louvain: { resolution: value },
+                      },
                     },
-                  },
-                });
-
-                debouncedClustering(value);
-              }}
-            />
+                  });
+                }}
+              />
+              {currentCluterResolution.current !== resolution
+                && (
+                  <Button
+                    type='primary'
+                    onClick={() => {
+                      dispatch(runCellSetsClustering(experimentId, resolution));
+                      currentCluterResolution.current = resolution;
+                    }}
+                  >
+                    Recluster
+                  </Button>
+                )}
+            </Space>
           </Form.Item>
         </Form>
       </Panel>

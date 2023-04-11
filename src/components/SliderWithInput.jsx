@@ -38,7 +38,7 @@ const SliderWithInput = (props) => {
         step={stepToSet}
         disabled={disabled}
         style={{
-          minWidth: 100, display: 'inline-block', flexGrow: 100, margin: '0.5em',
+          minWidth: 80, display: 'inline-block', margin: '0.5em 0.25em',
         }}
       />
 
@@ -61,7 +61,7 @@ const SliderWithInput = (props) => {
         }}
         step={stepToSet}
         disabled={disabled}
-        style={{ width: 80, display: 'inline-block' }}
+        style={{ width: 60, display: 'inline-block' }}
       />
     </Space>
   );
