@@ -14,51 +14,46 @@ const SliderWithInput = (props) => {
   } = props;
 
   const [, handleChange] = useUpdateThrottled(onUpdate, value);
-
-  const [localValue, setLocalValue] = useState(value);
+  const [controlValue, setControlValue] = useState(null);
 
   const debouncedOnChange = useCallback(
-    _.debounce((changedValue) => handleChange(changedValue), 1000), [],
+    _.debounce((changedValue) => handleChange(changedValue), 400), [],
   );
 
   useEffect(() => {
-    setLocalValue(parseFloat(value));
+    setControlValue(value);
   }, [value]);
+
+  useEffect(() => {
+    if (controlValue === value) { return; }
+    debouncedOnChange(controlValue);
+  }, [controlValue]);
 
   const stepToSet = step ?? max / 200;
 
   return (
     <Space align='start'>
       <Slider
-        value={localValue}
+        value={controlValue}
         min={min}
         max={max}
-        onChange={setLocalValue}
-        onAfterChange={() => handleChange(localValue)}
+        onChange={(inputValue) => setControlValue(parseFloat(inputValue))}
         step={stepToSet}
         disabled={disabled}
         style={{
-          minWidth: 80, display: 'inline-block', margin: '0.5em 0.25em',
+          minWidth: 80, display: 'inline-block', flexGrow: 80, margin: '0.5em 0.25em',
         }}
       />
 
       <InputNumber
-        value={localValue}
+        value={controlValue}
         min={min}
         max={max}
-        onChange={(changedValue) => {
-          if (changedValue === value) { return; }
-
-          const changedValueWithinBounds = Math.min(Math.max(changedValue, min), max);
-
-          setLocalValue(changedValueWithinBounds);
-
-          debouncedOnChange(changedValueWithinBounds);
+        onChange={(inputValue) => {
+          const boundedValue = Math.min(Math.max(inputValue, min), max);
+          setControlValue(boundedValue);
         }}
-        onPressEnter={() => { handleChange(localValue); }}
-        onStep={(newValue) => {
-          handleChange(newValue);
-        }}
+        onStep={(newValue) => setControlValue(newValue)}
         step={stepToSet}
         disabled={disabled}
         style={{ width: 60, display: 'inline-block' }}

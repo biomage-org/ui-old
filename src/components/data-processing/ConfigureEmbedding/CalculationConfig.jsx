@@ -47,14 +47,14 @@ const CalculationConfig = (props) => {
 
   const [resolution, setResolution] = useState(null);
   const [minDistance, setMinDistance] = useState(null);
-  const currentCluterResolution = useRef(null);
+  const initialResolution = useRef(null);
 
   useEffect(() => {
-    if (!resolution && louvainSettings) {
+    if (!initialResolution.current && louvainSettings?.resolution) {
       setResolution(louvainSettings.resolution);
-      currentCluterResolution.current = louvainSettings.resolution;
+      initialResolution.current = louvainSettings.resolution;
     }
-  }, [louvainSettings]);
+  }, [!louvainSettings?.resolution]);
 
   useEffect(() => {
     if (!minDistance && umapSettings) {
@@ -230,7 +230,7 @@ const CalculationConfig = (props) => {
       <Form.Item
         label={(
           <span>
-            Learning Rate &nbsp;
+            Learning rate &nbsp;
             <Tooltip title='If the learning rate is too high, the data may look like a "ball" with any point approximately equidistant from its nearest neighbours.
           If the learning rate is too low, most points may look compressed in a dense cloud with few outliers. usually in the range [10.0, 1000.0]'
             >
@@ -392,27 +392,26 @@ const CalculationConfig = (props) => {
                 value={resolution}
                 onUpdate={(value) => {
                   if (value === resolution) { return; }
-
                   setResolution(value);
-                  updateSettings({
-                    clusteringSettings: {
-                      methodSettings: {
-                        louvain: { resolution: value },
-                      },
-                    },
-                  });
                 }}
               />
-              {currentCluterResolution.current !== resolution
+              {initialResolution.current !== resolution
                 && (
                   <Button
                     type='primary'
                     onClick={() => {
                       dispatch(runCellSetsClustering(experimentId, resolution));
-                      currentCluterResolution.current = resolution;
+                      initialResolution.current = resolution;
+                      updateSettings({
+                        clusteringSettings: {
+                          methodSettings: {
+                            louvain: { resolution },
+                          },
+                        },
+                      });
                     }}
                   >
-                    Recluster
+                    Cluster
                   </Button>
                 )}
             </Space>
