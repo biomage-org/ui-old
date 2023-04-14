@@ -13,14 +13,14 @@ import {
   savePlotConfig,
 } from 'redux/actions/componentConfig';
 
-import MitochondrialFractionHistogram from '../../plots/MitochondrialFractionHistogram';
-import MitochondrialFractionScatterplot from '../../plots/MitochondrialFractionScatterplot';
+import PlotStyling from 'components/plots/styling/PlotStyling';
+import MiniPlot from 'components/plots/MiniPlot';
+import MitochondrialFractionHistogram from 'components/plots/MitochondrialFractionHistogram';
+import MitochondrialFractionScatterplot from 'components/plots/MitochondrialFractionScatterplot';
 
-import PlotStyling from '../../plots/styling/PlotStyling';
-import MiniPlot from '../../plots/MiniPlot';
-import CalculationConfigContainer from '../CalculationConfigContainer';
+import CalculationConfigContainer from 'components/data-processing/CalculationConfigContainer';
+import FilterResultTable from 'components/data-processing/FilterResultTable';
 import CalculationConfig from './CalculationConfig';
-import FilterResultTable from '../FilterResultTable';
 
 const { Panel } = Collapse;
 

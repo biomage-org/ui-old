@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Form } from 'antd';
 
-import SliderWithInput from '../../SliderWithInput';
+import SliderWithInput from 'components/SliderWithInput';
 
 const DoubletScoresConfig = (props) => {
   const {
