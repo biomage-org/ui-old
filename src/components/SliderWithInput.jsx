@@ -6,18 +6,16 @@ import {
 
 import _ from 'lodash';
 
-import useUpdateThrottled from 'utils/customHooks/useUpdateThrottled';
-
 const SliderWithInput = (props) => {
   const {
     min, max, value, onUpdate, disabled, step,
+    interval = 1000,
   } = props;
 
-  const [, handleChange] = useUpdateThrottled(onUpdate, value);
   const [controlValue, setControlValue] = useState(null);
 
   const debouncedOnChange = useCallback(
-    _.debounce((changedValue) => handleChange(changedValue), 400), [],
+    _.debounce((changedValue) => onUpdate(changedValue), interval), [],
   );
 
   useEffect(() => {
@@ -25,7 +23,7 @@ const SliderWithInput = (props) => {
   }, [value]);
 
   useEffect(() => {
-    if (controlValue === value) { return; }
+    if (_.isNil(controlValue) || controlValue === value) { return; }
     debouncedOnChange(controlValue);
   }, [controlValue]);
 
@@ -69,11 +67,13 @@ SliderWithInput.propTypes = {
   onUpdate: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
   step: PropTypes.number,
+  interval: PropTypes.number,
 };
 
 SliderWithInput.defaultProps = {
   disabled: false,
   step: null,
+  interval: 1000,
 };
 
 export default SliderWithInput;
