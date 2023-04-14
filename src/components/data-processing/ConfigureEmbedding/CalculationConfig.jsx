@@ -10,11 +10,10 @@ import PropTypes from 'prop-types';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
 import { updateFilterSettings, saveProcessingSettings } from 'redux/actions/experimentSettings';
-
 import { runCellSetsClustering } from 'redux/actions/cellSets';
-import PreloadContent from '../../PreloadContent';
 
-import SliderWithInput from '../../SliderWithInput';
+import PreloadContent from 'components/PreloadContent';
+import SliderWithInput from 'components/SliderWithInput';
 
 const { Option } = Select;
 const { Panel } = Collapse;

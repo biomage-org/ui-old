@@ -27,7 +27,7 @@ const CalculationConfig = (props) => {
   const activeMethodSettings = config.methodSettings[activeMethod];
 
   return (
-    <>
+    <Form size='small'>
       <Form.Item label='Max percentage'>
         <SliderWithInput
           min={0}
@@ -47,7 +47,7 @@ const CalculationConfig = (props) => {
           disabled={disabled || plotType === 'logHistogram'}
         />
       </Form.Item>
-    </>
+    </Form>
   );
 };
 

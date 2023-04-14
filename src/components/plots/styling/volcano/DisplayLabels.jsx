@@ -1,8 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Form, Space,
-} from 'antd';
+import { Form } from 'antd';
 import SliderWithInput from 'components/SliderWithInput';
 
 const DisplayLabels = (props) => {
@@ -11,9 +9,8 @@ const DisplayLabels = (props) => {
   } = props;
 
   return (
-    <Space direction='vertical' style={{ width: '80%' }}>
+    <Form size='small'>
       <p><strong>Display Gene Labels Above (-log10 pvalue)</strong></p>
-
       <Form.Item
         label='Min. -log10 pvalue'
       >
@@ -27,7 +24,7 @@ const DisplayLabels = (props) => {
           }}
         />
       </Form.Item>
-    </Space>
+    </Form>
   );
 };
 

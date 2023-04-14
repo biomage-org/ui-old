@@ -10,7 +10,7 @@ const DoubletScoresConfig = (props) => {
   } = props;
 
   return (
-    <>
+    <Form size='small'>
       <Form.Item label='Probability threshold'>
         <SliderWithInput
           min={0}
@@ -30,7 +30,7 @@ const DoubletScoresConfig = (props) => {
           disabled={disabled}
         />
       </Form.Item>
-    </>
+    </Form>
   );
 };
 

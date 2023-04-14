@@ -22,8 +22,7 @@ const CellSizeDistributionConfig = (props) => {
   const withinRange = (cellSize) => Math.max(Math.min(cellSize, highestUmi), 0);
 
   return (
-    <>
-
+    <Form size='small'>
       <Form.Item disabled label='Minimum #UMIs per cell'>
         <Space>
           <Tooltip title='The cut-off is automatically calculated as the inflection point of the knee plot. The inflection point estimates the boundary between empty drops and droplets that contain cells. The number of UMIs per cell varies depending on cell type. The typical minimum threshold range approx. 500-2000.'>
@@ -57,7 +56,7 @@ const CellSizeDistributionConfig = (props) => {
           disabled={disabled}
         />
       </Form.Item>
-    </>
+    </Form>
   );
 };
 CellSizeDistributionConfig.propTypes = {
