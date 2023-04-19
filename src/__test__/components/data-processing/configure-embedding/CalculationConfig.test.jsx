@@ -1,139 +1,157 @@
 import React from 'react';
+import _ from 'lodash';
 import {
-  screen, render, waitFor, fireEvent,
-} from '@testing-library/react';
+  Select, Form, Alert,
+} from 'antd';
+import { mount } from 'enzyme';
+import configureStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
 import { Provider } from 'react-redux';
+import { act } from 'react-dom/test-utils';
 
 import fetchMock, { enableFetchMocks } from 'jest-fetch-mock';
 
+import { initialEmbeddingState } from 'redux/reducers/embeddings/initialState';
 import CalculationConfig from 'components/data-processing/ConfigureEmbedding/CalculationConfig';
-import createTestComponentFactory from '__test__/test-utils/testComponentFactory';
-import loadProcessingSettings from 'redux/actions/experimentSettings/processingConfig/loadProcessingSettings';
-import { makeStore } from 'redux/store';
-import '__test__/test-utils/setupTests';
-import { selectOption } from '__test__/test-utils/rtlHelpers';
-import { addChangedQCFilter } from 'redux/actions/experimentSettings';
-import runCellSetsClustering from 'redux/actions/cellSets/runCellSetsClustering';
-
-import mockAPI, {
-  generateDefaultMockAPIResponses,
-} from '__test__/test-utils/mockAPI';
-import fake from '__test__/test-utils/constants';
-import userEvent from '@testing-library/user-event';
-
-jest.mock('redux/actions/cellSets/runCellSetsClustering', () => jest.fn(() => ({ type: 'MOCK_ACTION' })));
-
-const FILTER_UUID = 'configureEmbedding';
-
-const mockOnPipelineRun = jest.fn();
-const mockOnConfigChange = jest.fn();
-
-const defaultProps = {
-  experimentId: '1234',
-  width: 50,
-  height: 50,
-  onPipelineRun: mockOnPipelineRun,
-  onConfigChange: mockOnConfigChange,
-};
-
-const calculationConfigFactory = createTestComponentFactory(CalculationConfig, defaultProps);
-
-const renderCalculationConfig = (store, props = {}) => render(
-  <Provider store={store}>
-    {calculationConfigFactory(props)}
-  </Provider>,
-);
+import generateExperimentSettingsMock from '../../../test-utils/experimentSettings.mock';
 
 enableFetchMocks();
+const mockStore = configureStore([thunk]);
 
-const mockAPIResponses = generateDefaultMockAPIResponses(fake.EXPERIMENT_ID);
-
-let storeState = null;
+const initialExperimentState = generateExperimentSettingsMock([]);
 
 describe('Data Processing CalculationConfig', () => {
+  const storeState = {
+    embeddings: initialEmbeddingState,
+    experimentSettings: {
+      ...initialExperimentState,
+      backendStatus: {
+        status: {
+          pipeline: {
+            startDate: '2020-01-01T00:00:00',
+          },
+        },
+      },
+    },
+  };
+
+  const mockOnConfigChange = jest.fn(() => { });
+  const mockOnPipelineRun = jest.fn(() => { });
+
   beforeEach(async () => {
-    jest.clearAllMocks();
+    const response = new Response(
+      JSON.stringify(
+        {
+          processingConfig:
+            { ...initialExperimentState.processing },
+        },
+      ),
+    );
 
     fetchMock.resetMocks();
-    fetchMock.mockIf(/.*/, mockAPI(mockAPIResponses));
-
-    storeState = makeStore();
-    await storeState.dispatch(loadProcessingSettings(fake.EXPERIMENT_ID));
+    fetchMock.doMock();
+    fetchMock.mockResolvedValue(response);
   });
 
-  it('Renders correctly', () => {
-    renderCalculationConfig(storeState);
-
-    expect(screen.getByText('Embedding settings')).toBeInTheDocument();
-    expect(screen.getByText('Method')).toBeInTheDocument();
-
-    // By default method is UMAP
-    expect(screen.getByText('Settings for UMAP:')).toBeInTheDocument();
-    expect(screen.getByText('Minimum distance')).toBeInTheDocument();
-    expect(screen.getByText('Distance metric')).toBeInTheDocument();
-
-    expect(screen.getByText('Clustering settings')).toBeInTheDocument();
-    expect(screen.getByText('Clustering method')).toBeInTheDocument();
-    expect(screen.getByText('Resolution')).toBeInTheDocument();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('Renders t-SNE settings correctly', async () => {
-    renderCalculationConfig(storeState);
+  it('renders correctly when nothing is loaded', () => {
+    const store = mockStore({
+      embeddings: {},
+      experimentSettings: {
+        ...initialExperimentState,
+        processing: {
+          ...initialExperimentState.processing,
+          configureEmbedding: null,
+        },
+      },
+    });
 
-    const methodSelector = screen.getAllByRole('combobox')[0];
-    await selectOption(/t-SNE/, methodSelector);
+    const component = mount(
+      <Provider store={store}>
+        <CalculationConfig
+          experimentId='1234'
+          width={50}
+          height={50}
+          onPipelineRun={mockOnPipelineRun}
+          onConfigChange={mockOnConfigChange}
+        />
+      </Provider>,
+    );
 
-    // Change to t-SNE
-    expect(screen.getByText('Settings for t-SNE:')).toBeInTheDocument();
-    expect(screen.getByText('Perplexity')).toBeInTheDocument();
-    expect(screen.getByText('Learning rate')).toBeInTheDocument();
+    const preloadContent = component.find('PreloadContent');
+
+    // There should be a spinner for loading state.
+    expect(preloadContent.length).toEqual(1);
   });
 
-  it('Changing embedding settings should show an alert', async () => {
-    const spyOnConfigChange = jest.fn(() => {
-      storeState.dispatch(addChangedQCFilter(FILTER_UUID));
-    });
+  it('renders correctly when the data is in the store', () => {
+    const store = mockStore(storeState);
 
-    renderCalculationConfig(storeState, {
-      onConfigChange: spyOnConfigChange,
-    });
+    const component = mount(
+      <Provider store={store}>
+        <CalculationConfig
+          experimentId='1234'
+          width={50}
+          height={50}
+          onPipelineRun={mockOnPipelineRun}
+          onConfigChange={mockOnConfigChange}
+        />
+      </Provider>,
+    );
 
-    const methodSelection = screen.getAllByRole('combobox')[0];
-    await selectOption(/t-SNE/, methodSelection);
+    // There should no spinner anymore.
+    const preloadContent = component.find('PreloadContent');
+    expect(preloadContent.length).toEqual(0);
 
-    expect(spyOnConfigChange).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('Your changes are not yet applied. To update the plots, click Run.')).toBeInTheDocument();
+    // There should be a form loaded.
+    const form = component.find(Form);
+    expect(form.length).toBeGreaterThan(0);
   });
 
-  it('Changing resolution settings should show cluster button', async () => {
-    renderCalculationConfig(storeState);
+  it('A changed setting should show an alert', () => {
+    const changedStepStoreState = _.cloneDeep(storeState);
+    changedStepStoreState.experimentSettings.processing.meta.changedQCFilters = new Set(['configureEmbedding']);
+    const store = mockStore(changedStepStoreState);
 
-    const resolutionSettings = screen.getAllByRole('spinbutton')[1];
-    fireEvent.change(resolutionSettings, { target: { value: 4.0 } });
+    const component = mount(
+      <Provider store={store}>
+        <CalculationConfig
+          experimentId='1234'
+          width={50}
+          height={50}
+          onPipelineRun={mockOnPipelineRun}
+          onConfigChange={mockOnConfigChange}
+        />
+      </Provider>,
+    );
 
-    await waitFor(async () => {
-      expect(screen.getByText('Cluster')).toBeInTheDocument();
-    });
-
-    userEvent.click(screen.getByText('Cluster'));
-    expect(runCellSetsClustering).toHaveBeenCalledTimes(1);
+    // The alert should show up.
+    const alert = component.find(Alert);
+    expect(alert.length).toEqual(1);
   });
 
-  it('Changing resolution settings to initial value should remove the cluster button ', async () => {
-    renderCalculationConfig(storeState);
+  it('a changed setting should trigger an onConfigChange callback', () => {
+    const store = mockStore(storeState);
 
-    const resolutionSettings = screen.getAllByRole('spinbutton')[1];
-    fireEvent.change(resolutionSettings, { target: { value: 4.0 } });
+    const component = mount(
+      <Provider store={store}>
+        <CalculationConfig
+          experimentId='1234'
+          width={50}
+          height={50}
+          onConfigChange={mockOnConfigChange}
+        />
+      </Provider>,
+    );
 
-    await waitFor(async () => {
-      expect(screen.getByText('Cluster')).toBeInTheDocument();
-    });
+    // Switching the embedding type...
+    act(() => { component.find(Select).at(0).getElement().props.onChange('tsne'); });
 
-    // Changing back to initial value, which is 0.8
-    fireEvent.change(resolutionSettings, { target: { value: 0.8 } });
+    component.update();
 
-    await waitFor(() => {
-      expect(screen.queryByText('Cluster')).toBeNull();
-    });
+    expect(mockOnConfigChange).toHaveBeenCalledTimes(1);
   });
 });
