@@ -13,6 +13,8 @@ import {
   EXPERIMENT_SETTINGS_DISCARD_CHANGED_QC_FILTERS,
 } from 'redux/actionTypes/experimentSettings';
 
+import { CELL_SETS_CLUSTERING_UPDATING } from 'redux/actionTypes/cellSets';
+
 import { EMBEDDINGS_LOADING } from 'redux/actionTypes/embeddings';
 
 import { runQC } from 'redux/actions/pipeline';
@@ -53,6 +55,11 @@ const initialState = {
         },
       },
     },
+  },
+  cellSets: {
+    error: false,
+    updatingClustering: false,
+    loading: false,
   },
   networkResources: {
     environment: 'testing',
@@ -114,13 +121,18 @@ describe('runQC action', () => {
 
     await waitForActions(
       store,
-      [EXPERIMENT_SETTINGS_DISCARD_CHANGED_QC_FILTERS, EMBEDDINGS_LOADING],
+      [
+        EXPERIMENT_SETTINGS_DISCARD_CHANGED_QC_FILTERS,
+        CELL_SETS_CLUSTERING_UPDATING,
+        EMBEDDINGS_LOADING,
+      ],
     );
 
     const actions = store.getActions();
 
     expect(actions[0].type).toEqual(EXPERIMENT_SETTINGS_DISCARD_CHANGED_QC_FILTERS);
-    expect(actions[1].type).toEqual(EMBEDDINGS_LOADING);
+    expect(actions[1].type).toEqual(CELL_SETS_CLUSTERING_UPDATING);
+    expect(actions[2].type).toEqual(EMBEDDINGS_LOADING);
 
     expect(actions).toMatchSnapshot();
   });

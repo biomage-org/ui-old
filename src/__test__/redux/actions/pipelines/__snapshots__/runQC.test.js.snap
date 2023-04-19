@@ -31,6 +31,9 @@ exports[`runQC action Runs only the embedding if only changed filter was configu
     "type": "experimentSettings/discardChangedQCFilters",
   },
   {
+    "type": "cellSets/clusteringUpdating",
+  },
+  {
     "payload": {
       "embeddingType": "umap",
     },

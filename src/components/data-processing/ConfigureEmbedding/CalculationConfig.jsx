@@ -1,16 +1,14 @@
 import React, {
-  useState, useEffect, useCallback, useRef,
+  useState, useEffect,
 } from 'react';
-import _ from 'lodash';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Collapse, InputNumber, Form, Select, Tooltip, Alert, Space, Button,
+  Collapse, InputNumber, Form, Select, Tooltip, Space,
 } from 'antd';
 import PropTypes from 'prop-types';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 
-import { updateFilterSettings, saveProcessingSettings } from 'redux/actions/experimentSettings';
-import { runCellSetsClustering } from 'redux/actions/cellSets';
+import { updateFilterSettings } from 'redux/actions/experimentSettings';
 
 import PreloadContent from 'components/PreloadContent';
 import SliderWithInput from 'components/SliderWithInput';
@@ -30,14 +28,11 @@ const EMBEDD_METHOD_TEXT = 'Reducing the dimensionality does lose some informati
   + 't-SNE and UMAP are stochastic and very much dependent on choice of parameters (t-SNE even more than UMAP) and can yield very different results in different runs. ';
 
 const CalculationConfig = (props) => {
-  const { experimentId, onConfigChange, disabled } = props;
+  const { onConfigChange, disabled } = props;
   const FILTER_UUID = 'configureEmbedding';
   const dispatch = useDispatch();
 
   const data = useSelector((state) => state.experimentSettings.processing[FILTER_UUID]);
-  const changedQCFilters = useSelector(
-    (state) => state.experimentSettings.processing.meta.changedQCFilters,
-  );
 
   const { method: clusteringMethod } = data?.clusteringSettings || {};
   const { method: embeddingMethod } = data?.embeddingSettings || {};
@@ -46,12 +41,10 @@ const CalculationConfig = (props) => {
 
   const [resolution, setResolution] = useState(null);
   const [minDistance, setMinDistance] = useState(null);
-  const initialResolution = useRef(null);
 
   useEffect(() => {
-    if (!initialResolution.current && louvainSettings?.resolution) {
+    if (louvainSettings?.resolution) {
       setResolution(louvainSettings.resolution);
-      initialResolution.current = louvainSettings.resolution;
     }
   }, [!louvainSettings?.resolution]);
 
@@ -61,24 +54,12 @@ const CalculationConfig = (props) => {
     }
   }, [umapSettings]);
 
-  const dispatchDebounce = useCallback(_.debounce((f) => {
-    dispatch(f);
-  }, 1500), []);
-
   const updateSettings = (diff) => {
-    if (diff.embeddingSettings) {
-      // If this is an embedding change, indicate to user that their changes are not
-      // applied until they hit Run.
-      onConfigChange();
-    } else {
-      // If it's a clustering change, debounce the save process at 1.5s.
-      dispatchDebounce(saveProcessingSettings(experimentId, FILTER_UUID));
-    }
-
     dispatch(updateFilterSettings(
       FILTER_UUID,
       diff,
     ));
+    onConfigChange();
   };
 
   const setMinimumDistance = (value) => {
@@ -133,6 +114,25 @@ const CalculationConfig = (props) => {
     });
 
     onConfigChange();
+  };
+
+  const setEmbeddingMethod = (value) => {
+    updateSettings({
+      embeddingSettings: {
+        method: value,
+      },
+    });
+  };
+
+  const setClusteringResolution = (value) => {
+    if (value === resolution) { return; }
+    updateSettings({
+      clusteringSettings: {
+        methodSettings: {
+          louvain: { resolution: value },
+        },
+      },
+    });
   };
 
   const renderUMAPSettings = () => (
@@ -261,11 +261,6 @@ const CalculationConfig = (props) => {
     <Collapse defaultActiveKey={['embedding-settings', 'clustering-settings']}>
       <Panel header='Embedding settings' key='embedding-settings' collapsible={disabled && 'disabled'}>
         <Form size='small' disabled={disabled}>
-          {Boolean(changedQCFilters.size) && (
-            <Form.Item>
-              <Alert message='Your changes are not yet applied. To update the plots, click Run.' type='warning' showIcon />
-            </Form.Item>
-          )}
 
           <Form.Item
             label={(
@@ -304,13 +299,7 @@ const CalculationConfig = (props) => {
             <Select
               disabled={disabled}
               value={embeddingMethod}
-              onChange={(value) => {
-                updateSettings({
-                  embeddingSettings: {
-                    method: value,
-                  },
-                });
-              }}
+              onChange={setEmbeddingMethod}
             >
               <Option value='umap'>UMAP</Option>
               <Option value='tsne'>t-SNE</Option>
@@ -390,30 +379,8 @@ const CalculationConfig = (props) => {
                 disabled={disabled}
                 value={resolution}
                 interval={400}
-                onUpdate={(value) => {
-                  if (value === resolution) { return; }
-                  setResolution(value);
-                }}
+                onUpdate={setClusteringResolution}
               />
-              {initialResolution.current !== resolution
-                && (
-                  <Button
-                    type='primary'
-                    onClick={() => {
-                      dispatch(runCellSetsClustering(experimentId, resolution));
-                      initialResolution.current = resolution;
-                      updateSettings({
-                        clusteringSettings: {
-                          methodSettings: {
-                            louvain: { resolution },
-                          },
-                        },
-                      });
-                    }}
-                  >
-                    Cluster
-                  </Button>
-                )}
             </Space>
           </Form.Item>
         </Form>
@@ -423,7 +390,6 @@ const CalculationConfig = (props) => {
 };
 
 CalculationConfig.propTypes = {
-  experimentId: PropTypes.string.isRequired,
   onConfigChange: PropTypes.func.isRequired,
   disabled: PropTypes.bool,
 };

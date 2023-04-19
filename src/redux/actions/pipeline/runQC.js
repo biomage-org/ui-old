@@ -9,16 +9,32 @@ import {
 import { saveProcessingSettings } from 'redux/actions/experimentSettings';
 import { loadBackendStatus } from 'redux/actions/backendStatus';
 import { loadEmbedding } from 'redux/actions/embedding';
+import { runCellSetsClustering } from 'redux/actions/cellSets';
 
-const runOnlyConfigureEmbedding = async (experimentId, embeddingMethod, dispatch) => {
-  await dispatch(saveProcessingSettings(experimentId, 'configureEmbedding'));
+const configureEmbeddingStepKey = 'configureEmbedding';
+
+const runOnlyConfigureEmbedding = async (experimentId, clusteringConfig, dispatch) => {
+  const { embeddingSettings: { method: embeddingMethod } } = clusteringConfig;
+
+  const {
+    method: clusteringMethod,
+    methodSettings: clusteringSettings,
+  } = clusteringConfig.clusteringSettings;
+
+  await dispatch(saveProcessingSettings(experimentId, configureEmbeddingStepKey));
 
   dispatch({
     type: EXPERIMENT_SETTINGS_DISCARD_CHANGED_QC_FILTERS,
     payload: {},
   });
 
-  // Only configure embedding was changed so we run loadEmbedding
+  dispatch(
+    runCellSetsClustering(
+      experimentId,
+      clusteringSettings[clusteringMethod].resolution,
+    ),
+  );
+
   dispatch(
     loadEmbedding(
       experimentId,
@@ -32,10 +48,10 @@ const runQC = (experimentId) => async (dispatch, getState) => {
   const { processing } = getState().experimentSettings;
   const { changedQCFilters } = processing.meta;
 
-  if (changedQCFilters.size === 1 && changedQCFilters.has('configureEmbedding')) {
+  if (changedQCFilters.size === 1 && changedQCFilters.has(configureEmbeddingStepKey)) {
     runOnlyConfigureEmbedding(
       experimentId,
-      processing.configureEmbedding.embeddingSettings.method,
+      processing.configureEmbedding,
       dispatch,
     );
 

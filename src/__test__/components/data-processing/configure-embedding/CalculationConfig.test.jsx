@@ -111,28 +111,6 @@ describe('Data Processing CalculationConfig', () => {
     expect(form.length).toBeGreaterThan(0);
   });
 
-  it('A changed setting should show an alert', () => {
-    const changedStepStoreState = _.cloneDeep(storeState);
-    changedStepStoreState.experimentSettings.processing.meta.changedQCFilters = new Set(['configureEmbedding']);
-    const store = mockStore(changedStepStoreState);
-
-    const component = mount(
-      <Provider store={store}>
-        <CalculationConfig
-          experimentId='1234'
-          width={50}
-          height={50}
-          onPipelineRun={mockOnPipelineRun}
-          onConfigChange={mockOnConfigChange}
-        />
-      </Provider>,
-    );
-
-    // The alert should show up.
-    const alert = component.find(Alert);
-    expect(alert.length).toEqual(1);
-  });
-
   it('a changed setting should trigger an onConfigChange callback', () => {
     const store = mockStore(storeState);
 
