@@ -24,7 +24,7 @@ exports[`runQC action Dispatches events properly 2`] = `
 
 exports[`runQC action Dispatches status error if loading fails 1`] = `[]`;
 
-exports[`runQC action Runs only the embedding if only changed filter was configureEmbedding 1`] = `
+exports[`runQC action Runs only the clustering if only clustering is changed 1`] = `
 [
   {
     "payload": {},
@@ -33,9 +33,18 @@ exports[`runQC action Runs only the embedding if only changed filter was configu
   {
     "type": "cellSets/clusteringUpdating",
   },
+]
+`;
+
+exports[`runQC action Runs only the embedding if only embedding is changed 1`] = `
+[
+  {
+    "payload": {},
+    "type": "experimentSettings/discardChangedQCFilters",
+  },
   {
     "payload": {
-      "embeddingType": "umap",
+      "embeddingType": "tsne",
     },
     "type": "embeddings/loading",
   },

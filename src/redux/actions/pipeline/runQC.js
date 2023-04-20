@@ -13,13 +13,22 @@ import { runCellSetsClustering } from 'redux/actions/cellSets';
 
 const configureEmbeddingStepKey = 'configureEmbedding';
 
-const runOnlyConfigureEmbedding = async (experimentId, clusteringConfig, dispatch) => {
-  const { embeddingSettings: { method: embeddingMethod } } = clusteringConfig;
+const runOnlyConfigureEmbedding = async (experimentId, originalConfig, newConfig, dispatch) => {
+  const {
+    embeddingSettings: { method: oldEmbeddingMethod },
+    clusteringSettings: {
+      method: oldClusteringMethod,
+      methodSettings: oldClusteringSettings,
+    },
+  } = originalConfig;
 
   const {
-    method: clusteringMethod,
-    methodSettings: clusteringSettings,
-  } = clusteringConfig.clusteringSettings;
+    embeddingSettings: { method: newEmbeddingMethod },
+    clusteringSettings: {
+      method: newClusteringMethod,
+      methodSettings: newClusteringSettings,
+    },
+  } = newConfig;
 
   await dispatch(saveProcessingSettings(experimentId, configureEmbeddingStepKey));
 
@@ -28,29 +37,36 @@ const runOnlyConfigureEmbedding = async (experimentId, clusteringConfig, dispatc
     payload: {},
   });
 
-  dispatch(
-    runCellSetsClustering(
-      experimentId,
-      clusteringSettings[clusteringMethod].resolution,
-    ),
-  );
+  if (newClusteringSettings[newClusteringMethod].resolution
+    !== oldClusteringSettings[oldClusteringMethod].resolution
+  ) {
+    dispatch(
+      runCellSetsClustering(
+        experimentId,
+        newClusteringSettings[newClusteringMethod].resolution,
+      ),
+    );
+  }
 
-  dispatch(
-    loadEmbedding(
-      experimentId,
-      embeddingMethod,
-      true,
-    ),
-  );
+  if (newEmbeddingMethod !== oldEmbeddingMethod) {
+    dispatch(
+      loadEmbedding(
+        experimentId,
+        newEmbeddingMethod,
+        true,
+      ),
+    );
+  }
 };
 
 const runQC = (experimentId) => async (dispatch, getState) => {
-  const { processing } = getState().experimentSettings;
+  const { processing, originalProcessing } = getState().experimentSettings;
   const { changedQCFilters } = processing.meta;
 
   if (changedQCFilters.size === 1 && changedQCFilters.has(configureEmbeddingStepKey)) {
     runOnlyConfigureEmbedding(
       experimentId,
+      originalProcessing.configureEmbedding,
       processing.configureEmbedding,
       dispatch,
     );

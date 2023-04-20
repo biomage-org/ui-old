@@ -108,22 +108,24 @@ describe('runQC action', () => {
     expect(actions).toMatchSnapshot();
   });
 
-  it('Runs only the embedding if only changed filter was configureEmbedding', async () => {
+  it('Runs only the embedding if only embedding is changed', async () => {
     fetchMock.resetMocks();
 
     saveProcessingSettings.mockImplementation(() => () => Promise.resolve());
 
-    const onlyConfigureEmbeddingChangedState = _.cloneDeep(initialState);
-    onlyConfigureEmbeddingChangedState.experimentSettings.processing.meta.changedQCFilters = new Set(['configureEmbedding']);
+    const onlyEmbeddingChangedState = _.cloneDeep(initialState);
+    onlyEmbeddingChangedState.experimentSettings.processing.configureEmbedding.embeddingSettings.method = 'tsne';
+    onlyEmbeddingChangedState.experimentSettings.processing.meta.changedQCFilters = new Set(['configureEmbedding']);
 
-    const store = mockStore(onlyConfigureEmbeddingChangedState);
-    await store.dispatch(runQC(experimentId));
+    const store = mockStore(onlyEmbeddingChangedState);
+
+    // Change embedding method
+    store.dispatch(runQC(experimentId));
 
     await waitForActions(
       store,
       [
         EXPERIMENT_SETTINGS_DISCARD_CHANGED_QC_FILTERS,
-        CELL_SETS_CLUSTERING_UPDATING,
         EMBEDDINGS_LOADING,
       ],
     );
@@ -131,8 +133,40 @@ describe('runQC action', () => {
     const actions = store.getActions();
 
     expect(actions[0].type).toEqual(EXPERIMENT_SETTINGS_DISCARD_CHANGED_QC_FILTERS);
+    expect(actions[1].type).toEqual(EMBEDDINGS_LOADING);
+
+    expect(actions).toMatchSnapshot();
+  });
+
+  it('Runs only the clustering if only clustering is changed', async () => {
+    fetchMock.resetMocks();
+
+    saveProcessingSettings.mockImplementation(() => () => Promise.resolve());
+
+    const onlyClusteringChangedState = _.cloneDeep(initialState);
+
+    const clusteringMethod = onlyClusteringChangedState.experimentSettings.processing
+      .configureEmbedding.clusteringSettings.method;
+
+    onlyClusteringChangedState.experimentSettings.processing
+      .configureEmbedding.clusteringSettings.methodSettings[clusteringMethod].resolution = 1.6;
+    onlyClusteringChangedState.experimentSettings.processing.meta.changedQCFilters = new Set(['configureEmbedding']);
+
+    const store = mockStore(onlyClusteringChangedState);
+    await store.dispatch(runQC(experimentId));
+
+    await waitForActions(
+      store,
+      [
+        EXPERIMENT_SETTINGS_DISCARD_CHANGED_QC_FILTERS,
+        CELL_SETS_CLUSTERING_UPDATING,
+      ],
+    );
+
+    const actions = store.getActions();
+
+    expect(actions[0].type).toEqual(EXPERIMENT_SETTINGS_DISCARD_CHANGED_QC_FILTERS);
     expect(actions[1].type).toEqual(CELL_SETS_CLUSTERING_UPDATING);
-    expect(actions[2].type).toEqual(EMBEDDINGS_LOADING);
 
     expect(actions).toMatchSnapshot();
   });
