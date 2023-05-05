@@ -96,10 +96,13 @@ jobs:
           body=$(cat .next/analyze/__bundle_analysis_comment.txt)
 
           # This sets multiline strings into the output variable
-          # See https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#example-of-a-multiline-string
-          echo "body<<EOF" >> $GITHUB_OUTPUT
-          echo "$body" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # See https://lab.amalitsky.com/posts/2022/github-actions-set-output-migration/#migration-from-set-output-to-github-output
+          delimiter="$(openssl rand -hex 8)"
+          {
+            echo "body<<${delimiter}"
+            echo "$UNCHECKED_BODY"
+            echo "${delimiter}"
+          } >> $GITHUB_OUTPUT
 
       - name: Find Comment
         uses: peter-evans/find-comment@v1
