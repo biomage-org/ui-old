@@ -70,6 +70,7 @@ const fetchWork = async (
     extras = undefined,
     timeout = 180,
     broadcast = false,
+    onETagGenerated = () => { },
   } = optionals;
 
   const backendStatus = getBackendStatus(experimentId)(getState()).status;
@@ -109,6 +110,8 @@ const fetchWork = async (
     dispatch,
     getState,
   );
+
+  onETagGenerated(ETag);
 
   // First, let's try to fetch this information from the local cache.
   const data = await cache.get(ETag);

@@ -6,7 +6,6 @@ import {
 import Link from 'next/link';
 
 import { plotNames, layout } from 'utils/constants';
-import heatmap from '../../../public/static/media/heatmap.png';
 import embeddingContinuous from '../../../public/static/media/embeddingContinuous.png';
 import embeddingCategorical from '../../../public/static/media/embeddingCategorical.png';
 import violin from '../../../public/static/media/violin.png';
@@ -83,12 +82,6 @@ const plots = [
         link: 'marker-heatmap',
       },
       {
-        name: plotNames.HEATMAP,
-        image: heatmap,
-        key: 'heatmap-key',
-        link: 'heatmap',
-      },
-      {
         name: plotNames.VIOLIN_PLOT,
         image: violin,
         key: 'violin-key',
@@ -116,6 +109,12 @@ const plots = [
         image: volcano,
         key: 'volcano-key',
         link: 'volcano',
+      },
+      {
+        name: plotNames.BATCH_DIFFERENTIAL_EXPRESSION,
+        image: '/static/media/batch-de.png',
+        key: 'batch-differential-expression-key',
+        link: 'batch-differential-expression',
       },
     ],
   },
