@@ -75,7 +75,6 @@ const Loader = ({ experimentId }) => {
   const backendStatus = useSelector((state) => state.backendStatus);
   const workerInfo = backendStatus[experimentId]?.status?.worker;
   const { workingOn, request } = workerInfo;
-  console.log('workerInfo: ', workerInfo);
 
   const { data: workerStatus } = useSWR(
     () => (experimentId ? `/v2/experiments/${experimentId}/backendStatus` : null),
