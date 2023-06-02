@@ -54,22 +54,21 @@ const fastLoad = (message) => (
 );
 
 const formatInfo = (workingOn, request) => {
-  if (workingOn === DOWNLOAD_EXPERIMENT || workingOn === LOAD_EXPERIMENT) {
-    return 'Scientists puting the lab coat on...';
+  switch (workingOn) {
+    case DOWNLOAD_EXPERIMENT:
+    case LOAD_EXPERIMENT:
+      return 'Scientists puting the lab coat on...';
+    case STARTED_TASK:
+      return `Lab is working on ${request.body.name}`;
+    case COMPRESSING_TASK_DATA:
+      return `Work finished for ${request.body.name}! Compressing the results for faster download`;
+    case UPLOADING_TASK_DATA:
+      return `Work finished for ${request.body.name}! Getting data ready for download`;
+    case FINISHED_TASK:
+      return `Almost there! we're downloading the results for ${request.body.name}`;
+    default:
+      return workingOn;
   }
-  if (workingOn === STARTED_TASK) {
-    return `Lab is working on ${request.body.name}`;
-  }
-  if (workingOn === COMPRESSING_TASK_DATA) {
-    return `Work finished for ${request.body.name}! Compressing the results for faster download`;
-  }
-  if (workingOn === UPLOADING_TASK_DATA) {
-    return `Work finished for ${request.body.name}! Getting data ready for download`;
-  }
-  if (workingOn === FINISHED_TASK) {
-    return `Almost there! we're downloading the results for ${request.body.name}`;
-  }
-  return workingOn;
 };
 
 const Loader = ({ experimentId }) => {
