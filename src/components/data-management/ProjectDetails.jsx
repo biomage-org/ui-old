@@ -70,7 +70,7 @@ const ProjectDetails = ({ width, height }) => {
             {`Project ID: ${activeExperimentId}`}
           </Text>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div>
           <Text strong>
             Description:
           </Text>
@@ -82,6 +82,8 @@ const ProjectDetails = ({ width, height }) => {
               }
             }}
           />
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto' }}>
           <SampleOptions />
           <SamplesTable
             ref={samplesTableRef}
