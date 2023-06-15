@@ -39,12 +39,27 @@ const RepositoryTable = (props) => {
     navigateTo(modules.DATA_MANAGEMENT, { experimentId: newExperimentId });
   };
 
+  const exploreExperiment = (exampleExperimentId) => {
+    navigateTo(modules.DATA_EXPLORATION, { experimentId: exampleExperimentId });
+  };
+
   // Make ready-to-use rows for the table
   // e.g. turn sourceTitle+sourceUrl into a single <a> tag, etc.
   const formatData = (data) => data.map((row) => ({
     key: row.id,
     name: row.name,
-    explore: <Tooltip title='Click to explore this project.'><Button type='primary' aria-label='clone' onClick={() => cloneExperiment(row.id)}>Explore</Button></Tooltip>,
+    explore: (
+      <center>
+        <Space size='large'>
+          <Tooltip title='Click to explore this project.'>
+            <Button type='primary' aria-label='explore' onClick={() => exploreExperiment(row.id)}>Explore</Button>
+          </Tooltip>
+          <Tooltip title='Click to create a copy of this project you can modify.'>
+            <Button type='primary' aria-label='clone' onClick={() => cloneExperiment(row.id)}>Clone</Button>
+          </Tooltip>
+        </Space>
+      </center>
+    ),
     publication: <a href={row.publicationUrl}>{row.publicationTitle}</a>,
     dataSource: <a href={row.dataSourceUrl}>{row.dataSourceTitle}</a>,
     species: row.species,

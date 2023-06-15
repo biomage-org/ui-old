@@ -107,6 +107,12 @@ const ContentWrapper = (props) => {
 
   useEffect(() => {
     if (!currentExperimentId) return;
+
+    console.log('routeExperimentIdDebug');
+    console.log(routeExperimentId);
+
+    console.log('backendLoadingDebug');
+    console.log(backendLoading);
     if (!backendLoading) dispatch(loadBackendStatus(currentExperimentId));
 
     if (isBrowser) {

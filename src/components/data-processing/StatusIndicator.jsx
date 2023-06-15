@@ -34,7 +34,7 @@ const StatusIndicator = (props) => {
     error: errorLoadingBackendStatus,
   } = useSelector(getBackendStatus(experimentId));
 
-  const pipelineHadErrors = ['FAILED', 'TIMED_OUT', 'ABORTED'].includes(backendStatus.pipeline.status);
+  const pipelineHadErrors = ['FAILED', 'TIMED_OUT', 'ABORTED'].includes(backendStatus?.pipeline?.status);
 
   const {
     startDate, stopDate, status, error,
