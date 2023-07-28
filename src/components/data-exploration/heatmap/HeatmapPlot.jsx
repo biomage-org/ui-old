@@ -7,9 +7,11 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Empty } from 'antd';
 import _ from 'lodash';
 
-import { getCellSets, getSelectedMetadataTracks } from 'redux/selectors';
+import {
+  getCellSets, getCellSetsHierarchyByKeys, getSelectedMetadataTracks,
+} from 'redux/selectors';
 
-import { loadGeneExpression, loadMarkerGenes } from 'redux/actions/genes';
+import { loadDownsampledGeneExpression, loadMarkerGenes } from 'redux/actions/genes';
 import { loadComponentConfig } from 'redux/actions/componentConfig';
 import { updateCellInfo } from 'redux/actions/cellInfo';
 
@@ -75,6 +77,14 @@ const HeatmapPlot = (props) => {
     (state) => state.experimentSettings.processing
       .configureEmbedding?.clusteringSettings.methodSettings.louvain.resolution,
   );
+
+  const groupedCellSets = useSelector((state) => {
+    if (!heatmapSettings.groupedTracks) return undefined;
+
+    const groupedCellClasses = getCellSetsHierarchyByKeys(heatmapSettings.groupedTracks)(state);
+
+    return groupedCellClasses.map((cellClass) => cellClass.children).flat();
+  }, _.isEqual);
 
   const expressionMatrix = useSelector((state) => state.genes.expression.downsampledMatrix);
 
@@ -162,17 +172,28 @@ const HeatmapPlot = (props) => {
 
     const { groupedTracks, selectedCellSet, selectedPoints } = heatmapSettings;
 
-    dispatch(loadMarkerGenes(
-      experimentId,
-      COMPONENT_TYPE,
-      {
-        numGenes: nMarkerGenes,
-        groupedTracks,
-        selectedCellSet,
-        selectedPoints,
-        hiddenCellSets: cellSets.hidden,
-      },
-    ));
+    const downsampleSettings = {
+      groupedTracks,
+      selectedCellSet,
+      selectedPoints,
+      hiddenCellSets: cellSets.hidden,
+    };
+
+    // If selectedGenes are not set, load marker genes instead (first load)
+    if (_.isNil(selectedGenes)) {
+      dispatch(loadMarkerGenes(
+        experimentId,
+        COMPONENT_TYPE,
+        { numGenes: nMarkerGenes, ...downsampleSettings },
+      ));
+    } else {
+      // Load current genes
+      dispatch(loadDownsampledGeneExpression(
+        experimentId,
+        selectedGenes,
+        COMPONENT_TYPE,
+      ));
+    }
   }, [
     louvainClustersResolution,
     cellSets.accessible,
@@ -180,6 +201,7 @@ const HeatmapPlot = (props) => {
     heatmapSettings?.selectedCellSet,
     heatmapSettings?.selectedPoints,
     cellSets.hidden,
+    groupedCellSets,
   ]);
 
   useEffect(() => {
@@ -206,9 +228,9 @@ const HeatmapPlot = (props) => {
       <PlatformError
         error={expressionDataError}
         onClick={() => {
-          if (markerGenesLoadingError) {
-            const { groupedTracks, selectedCellSet, selectedPoints } = heatmapSettings;
+          const { groupedTracks, selectedCellSet, selectedPoints } = heatmapSettings;
 
+          if (markerGenesLoadingError) {
             dispatch(loadMarkerGenes(
               experimentId,
               COMPONENT_TYPE,
@@ -222,7 +244,9 @@ const HeatmapPlot = (props) => {
           }
 
           if ((expressionDataError || viewError) && !_.isNil(selectedGenes)) {
-            dispatch(loadGeneExpression(experimentId, selectedGenes, COMPONENT_TYPE, true));
+            dispatch(loadDownsampledGeneExpression(
+              experimentId, selectedGenes, COMPONENT_TYPE,
+            ));
           }
         }}
       />

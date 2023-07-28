@@ -23,7 +23,7 @@ import { updatePlotConfig, loadPlotConfig } from 'redux/actions/componentConfig'
 import Header from 'components/Header';
 import PlotContainer from 'components/plots/PlotContainer';
 import { generateSpec } from 'utils/plotSpecs/generateHeatmapSpec';
-import { loadGeneExpression, loadMarkerGenes } from 'redux/actions/genes';
+import { loadDownsampledGeneExpression, loadMarkerGenes } from 'redux/actions/genes';
 import loadGeneList from 'redux/actions/genes/loadGeneList';
 import { loadCellSets } from 'redux/actions/cellSets';
 import PlatformError from 'components/PlatformError';
@@ -80,6 +80,13 @@ const MarkerHeatmap = ({ experimentId }) => {
       .configureEmbedding?.clusteringSettings.methodSettings.louvain.resolution,
   ) || false;
 
+  const groupedCellSets = useSelector((state) => {
+    if (!config?.groupedTracks) return undefined;
+
+    const groupedCellClasses = getCellSetsHierarchyByKeys(config.groupedTracks)(state);
+    return groupedCellClasses.map((cellClass) => cellClass.children).flat();
+  }, _.isEqual);
+
   useEffect(() => {
     if (!louvainClustersResolution) dispatch(loadProcessingSettings(experimentId));
     if (!config) dispatch(loadPlotConfig(experimentId, plotUuid, plotType));
@@ -113,16 +120,25 @@ const MarkerHeatmap = ({ experimentId }) => {
       )
     ) return;
 
-    dispatch(loadMarkerGenes(
-      experimentId,
-      plotUuid,
-      {
-        numGenes: config.nMarkerGenes,
-        groupedTracks: config.groupedTracks,
-        selectedCellSet: config.selectedCellSet,
-        selectedPoints: config.selectedPoints,
-      },
-    ));
+    // On first load no selected genes, so fill in with markers
+    if (config.selectedGenes.length === 0) {
+      dispatch(loadMarkerGenes(
+        experimentId,
+        plotUuid,
+        {
+          numGenes: config.nMarkerGenes,
+          groupedTracks: config.groupedTracks,
+          selectedCellSet: config.selectedCellSet,
+          selectedPoints: config.selectedPoints,
+        },
+      ));
+    } else {
+      dispatch(loadDownsampledGeneExpression(
+        experimentId,
+        config.selectedGenes,
+        plotUuid,
+      ));
+    }
   }, [
     config?.nMarkerGenes,
     config?.groupedTracks,
@@ -131,6 +147,7 @@ const MarkerHeatmap = ({ experimentId }) => {
     hierarchy,
     cellSets.accessible,
     louvainClustersResolution,
+    groupedCellSets,
   ]);
 
   useEffect(() => {
@@ -313,7 +330,7 @@ const MarkerHeatmap = ({ experimentId }) => {
   ];
 
   const onGenesChange = (genes) => {
-    dispatch(loadGeneExpression(experimentId, genes, plotUuid, true));
+    dispatch(loadDownsampledGeneExpression(experimentId, genes, plotUuid));
   };
 
   const onGenesSelect = (genes) => {
@@ -321,11 +338,10 @@ const MarkerHeatmap = ({ experimentId }) => {
 
     if (_.isEqual(allGenes, config?.selectedGenes)) return;
 
-    dispatch(loadGeneExpression(experimentId, allGenes, plotUuid, true));
+    dispatch(loadDownsampledGeneExpression(experimentId, allGenes, plotUuid));
   };
 
   const onReset = () => {
-    onGenesChange([]);
     dispatch(loadMarkerGenes(
       experimentId,
       plotUuid,
@@ -424,9 +440,11 @@ const MarkerHeatmap = ({ experimentId }) => {
         <PlatformError
           description='Could not load gene expression data.'
           error={error}
-          onClick={
-            () => dispatch(loadGeneExpression(experimentId, config.selectedGenes, plotUuid, true))
-          }
+          onClick={() => {
+            dispatch(
+              loadDownsampledGeneExpression(experimentId, config.selectedGenes, plotUuid),
+            );
+          }}
         />
       );
     }

@@ -23,10 +23,12 @@ const loadMarkerGenes = (
   const body = {
     name: 'MarkerHeatmap',
     nGenes: numGenes,
-    cellSetKey: selectedCellSet,
-    groupByClasses: groupedTracks,
-    selectedPoints,
-    hiddenCellSetKeys: Array.from(hiddenCellSets),
+    downsampleSettings: {
+      selectedCellSet,
+      groupedTracks,
+      selectedPoints,
+      hiddenCellSets: Array.from(hiddenCellSets),
+    },
   };
 
   try {
@@ -57,7 +59,7 @@ const loadMarkerGenes = (
 
     // If the ETag is different, that means that a new request was sent in between
     // So we don't need to handle this outdated result
-    if (getState().genes.markers.ETag !== requestETag) {
+    if (getState().genes.expression.downsampledETag !== requestETag) {
       return;
     }
 

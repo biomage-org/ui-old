@@ -9,6 +9,7 @@ const genesExpressionLoaded = (state, action) => {
     componentUuid, genes,
     loadingStatus = _.difference(upperCaseArray(state.expression.loading), upperCaseArray(genes)),
     newGenes = undefined,
+    downsampledCellOrder = null,
   } = action.payload;
 
   // If there's any data to load, load it
@@ -21,24 +22,23 @@ const genesExpressionLoaded = (state, action) => {
       stats,
     } = newGenes;
 
-    const expressionMatrix = state.expression.matrix;
-    const downsampledExpressionMatrix = state.expression.downsampledMatrix;
-
-    expressionMatrix.pushGeneExpression(
-      orderedGeneNames,
-      rawExpression,
-      truncatedExpression,
-      zScore,
-      stats,
-    );
-
-    downsampledExpressionMatrix.pushGeneExpression(
-      orderedGeneNames,
-      rawExpression,
-      truncatedExpression,
-      zScore,
-      stats,
-    );
+    if (downsampledCellOrder) {
+      state.expression.downsampledMatrix.setGeneExpression(
+        orderedGeneNames,
+        rawExpression,
+        truncatedExpression,
+        zScore,
+        stats,
+      );
+    } else {
+      state.expression.matrix.pushGeneExpression(
+        orderedGeneNames,
+        rawExpression,
+        truncatedExpression,
+        zScore,
+        stats,
+      );
+    }
   }
 
   return {
@@ -56,6 +56,7 @@ const genesExpressionLoaded = (state, action) => {
         },
       },
       loading: loadingStatus,
+      downsampledCellOrder: downsampledCellOrder ?? state.expression.downsampledCellOrder,
     },
   };
 };
